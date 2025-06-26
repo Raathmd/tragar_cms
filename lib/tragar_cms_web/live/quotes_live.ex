@@ -39,9 +39,12 @@ defmodule TragarCmsWeb.QuotesLive do
       "description" => "",
       "quantity" => "",
       "weight" => "",
-      "dimensions" => "",
-      "unit_price" => "",
-      "item_type" => "",
+      "length" => "",
+      "width" => "",
+      "height" => "",
+      "unit_value" => "",
+      "package_type" => "",
+      "special_handling" => "",
       "special_instructions" => ""
     }
 
@@ -84,7 +87,7 @@ defmodule TragarCmsWeb.QuotesLive do
 
   @impl true
   def handle_event("save", %{"quote" => quote_params} = params, socket) do
-    # Extract and process items
+    # Extract and process items according to FreightWare specification
     items = extract_items_from_params(params)
     quote_params_with_items = Map.put(quote_params, "items", items)
 
@@ -185,7 +188,21 @@ defmodule TragarCmsWeb.QuotesLive do
       items_map when is_map(items_map) ->
         items_map
         |> Enum.sort_by(fn {key, _value} -> String.to_integer(key) end)
-        |> Enum.map(fn {_index, item} -> item end)
+        |> Enum.map(fn {_index, item} ->
+          # Process FreightWare item according to specification
+          %{
+            "description" => item["description"] || "",
+            "quantity" => parse_integer(item["quantity"]),
+            "weight" => parse_decimal(item["weight"]),
+            "length" => parse_decimal(item["length"]),
+            "width" => parse_decimal(item["width"]),
+            "height" => parse_decimal(item["height"]),
+            "unit_value" => parse_decimal(item["unit_value"]),
+            "package_type" => item["package_type"] || "",
+            "special_handling" => item["special_handling"] || "",
+            "special_instructions" => item["special_instructions"] || ""
+          }
+        end)
         |> Enum.reject(fn item ->
           # Remove empty items (where description is blank)
           item["description"] == "" || item["description"] == nil
@@ -195,4 +212,24 @@ defmodule TragarCmsWeb.QuotesLive do
         []
     end
   end
+
+  defp parse_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, _} -> int
+      :error -> nil
+    end
+  end
+
+  defp parse_integer(_), do: nil
+
+  defp parse_decimal(value) when is_binary(value) do
+    case Decimal.parse(value) do
+      {decimal, _} -> decimal
+      :error -> nil
+    end
+  rescue
+    _ -> nil
+  end
+
+  defp parse_decimal(_), do: nil
 end
