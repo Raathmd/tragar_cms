@@ -21,12 +21,39 @@ defmodule TragarCmsWeb.QuotesLive do
      |> assign(:stats, stats)
      |> assign(:sync_status, sync_status)
      |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
-     |> assign(:show_form, false)}
+     |> assign(:show_form, false)
+     |> assign(:items, [])}
   end
 
   @impl true
   def handle_event("toggle_form", _params, socket) do
-    {:noreply, assign(socket, :show_form, !socket.assigns.show_form)}
+    {:noreply,
+     socket
+     |> assign(:show_form, !socket.assigns.show_form)
+     |> assign(:items, [])}
+  end
+
+  @impl true
+  def handle_event("add_item", _params, socket) do
+    new_item = %{
+      "description" => "",
+      "quantity" => "",
+      "weight" => "",
+      "dimensions" => "",
+      "unit_price" => "",
+      "item_type" => "",
+      "special_instructions" => ""
+    }
+
+    items = socket.assigns.items ++ [new_item]
+    {:noreply, assign(socket, :items, items)}
+  end
+
+  @impl true
+  def handle_event("remove_item", %{"index" => index_str}, socket) do
+    index = String.to_integer(index_str)
+    items = socket.assigns.items |> List.delete_at(index)
+    {:noreply, assign(socket, :items, items)}
   end
 
   @impl true
@@ -40,18 +67,28 @@ defmodule TragarCmsWeb.QuotesLive do
   end
 
   @impl true
-  def handle_event("validate", %{"quote" => quote_params}, socket) do
+  def handle_event("validate", %{"quote" => quote_params} = params, socket) do
+    # Extract items from params if present
+    items = extract_items_from_params(params)
+
     changeset =
       %Quote{}
       |> Quotes.change_quote(quote_params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, :form, to_form(changeset))}
+    {:noreply,
+     socket
+     |> assign(:form, to_form(changeset))
+     |> assign(:items, items)}
   end
 
   @impl true
-  def handle_event("save", %{"quote" => quote_params}, socket) do
-    case Quotes.create_quote(quote_params) do
+  def handle_event("save", %{"quote" => quote_params} = params, socket) do
+    # Extract and process items
+    items = extract_items_from_params(params)
+    quote_params_with_items = Map.put(quote_params, "items", items)
+
+    case Quotes.create_quote(quote_params_with_items) do
       {:ok, quote} ->
         Phoenix.PubSub.broadcast(TragarCms.PubSub, "quotes", {:quote_created, quote})
 
@@ -64,6 +101,7 @@ defmodule TragarCmsWeb.QuotesLive do
          |> assign(:stats, stats)
          |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
          |> assign(:show_form, false)
+         |> assign(:items, [])
          |> put_flash(:info, "Quote created successfully!")}
 
       {:error, changeset} ->
@@ -111,15 +149,6 @@ defmodule TragarCmsWeb.QuotesLive do
   end
 
   @impl true
-
-  defp get_sync_status_safely do
-    try do
-      QuoteSync.get_status()
-    catch
-      :exit, _ -> %{status: :idle, last_sync: nil, error: nil}
-    end
-  end
-
   def handle_info({:sync_completed, created_count}, socket) do
     quotes = Quotes.list_quotes()
     stats = Quote.get_stats(quotes)
@@ -138,5 +167,32 @@ defmodule TragarCmsWeb.QuotesLive do
      |> assign(:stats, stats)
      |> assign(:sync_status, sync_status)
      |> put_flash(:info, message)}
+  end
+
+  defp get_sync_status_safely do
+    try do
+      QuoteSync.get_status()
+    catch
+      :exit, _ -> %{status: :idle, last_sync: nil, error: nil}
+    end
+  end
+
+  defp extract_items_from_params(params) do
+    case params["items"] do
+      nil ->
+        []
+
+      items_map when is_map(items_map) ->
+        items_map
+        |> Enum.sort_by(fn {key, _value} -> String.to_integer(key) end)
+        |> Enum.map(fn {_index, item} -> item end)
+        |> Enum.reject(fn item ->
+          # Remove empty items (where description is blank)
+          item["description"] == "" || item["description"] == nil
+        end)
+
+      _ ->
+        []
+    end
   end
 end
