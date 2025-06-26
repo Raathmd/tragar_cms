@@ -58,6 +58,9 @@ defmodule TragarCms.Quotes.Quote do
     field :paying_party, :string
     field :vehicle_category, :string
 
+    # Quote items as embedded JSON
+    field :items, {:array, :map}, default: []
+
     # Legacy fields for backwards compatibility
     field :content, :string
     field :author, :string
