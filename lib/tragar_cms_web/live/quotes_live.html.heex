@@ -7,7 +7,7 @@
       </div>
       <nav class="mt-6">
         <a
-          href="/"
+          href="#"
           class="flex items-center px-6 py-3 text-blue-400 bg-gray-700 border-r-2 border-blue-400"
         >
           <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,17 +28,47 @@
     <div class="ml-64">
       <!-- Header -->
       <header class="bg-gray-800 border-b border-gray-700 h-16 flex items-center justify-between px-6">
-        <h2 class="text-xl font-semibold text-white">Quote Management Dashboard</h2>
+        <h2 class="text-xl font-semibold">Quote Management Dashboard</h2>
         <div class="flex items-center space-x-4">
+          <!-- Sync Status -->
+          <div class="text-sm text-gray-300">
+            <%= if @sync_status.last_sync do %>
+              Last sync: {Calendar.strftime(@sync_status.last_sync, "%H:%M")}
+              <span class={[
+                "ml-2 px-2 py-1 rounded text-xs",
+                case @sync_status.status do
+                  :success -> "bg-green-600 text-green-100"
+                  :error -> "bg-red-600 text-red-100"
+                  :syncing -> "bg-blue-600 text-blue-100"
+                  _ -> "bg-gray-600 text-gray-100"
+                end
+              ]}>
+                <%= case @sync_status.status do %>
+                  <% :success -> %>
+                    ✓ Success
+                  <% :error -> %>
+                    ✗ Error
+                  <% :syncing -> %>
+                    ⟳ Syncing
+                  <% _ -> %>
+                    ◯ Idle
+                <% end %>
+              </span>
+            <% else %>
+              <span class="text-gray-400">No sync yet</span>
+            <% end %>
+          </div>
+
           <button
             phx-click="sync_from_tragar"
-            class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+            class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium"
           >
-            🔄 Sync from Tragar
+            Sync from Tragar
           </button>
+
           <button
             phx-click="toggle_form"
-            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium"
           >
             + Add Quote
           </button>
@@ -47,98 +77,7 @@
       
 <!-- Dashboard Content -->
       <main class="p-6">
-        <!-- API Status Banner -->
-        <div class="mb-6">
-          <%= case @sync_status.status do %>
-            <% :syncing -> %>
-              <div class="bg-yellow-900 border border-yellow-600 rounded-lg p-4">
-                <div class="flex items-center">
-                  <svg
-                    class="animate-spin h-5 w-5 text-yellow-400 mr-3"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    >
-                    </circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    >
-                    </path>
-                  </svg>
-                  <span class="text-yellow-100">Syncing quotes from Tragar API...</span>
-                </div>
-              </div>
-            <% :success -> %>
-              <div class="bg-green-900 border border-green-600 rounded-lg p-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <svg
-                      class="h-5 w-5 text-green-400 mr-3"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd"
-                      >
-                      </path>
-                    </svg>
-                    <span class="text-green-100">API Connected</span>
-                  </div>
-                  <%= if @sync_status.last_sync do %>
-                    <span class="text-green-300 text-sm">
-                      Last sync: {Calendar.strftime(@sync_status.last_sync, "%H:%M")}
-                    </span>
-                  <% end %>
-                </div>
-              </div>
-            <% :error -> %>
-              <div class="bg-red-900 border border-red-600 rounded-lg p-4">
-                <div class="flex items-center">
-                  <svg class="h-5 w-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fill-rule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clip-rule="evenodd"
-                    >
-                    </path>
-                  </svg>
-                  <span class="text-red-100">
-                    API Error: {@sync_status.error || "Connection failed"}
-                  </span>
-                </div>
-              </div>
-            <% _ -> %>
-              <div class="bg-gray-800 border border-gray-600 rounded-lg p-4">
-                <div class="flex items-center">
-                  <svg class="h-5 w-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832L14 10.202a1 1 0 000-1.664l-4.445-2.37z"
-                      clip-rule="evenodd"
-                    >
-                    </path>
-                  </svg>
-                  <span class="text-gray-300">
-                    API Ready - Click "Sync from Tragar" to fetch quotes
-                  </span>
-                </div>
-              </div>
-          <% end %>
-        </div>
-        
-<!-- Stats Cards -->
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div class="flex items-center">
@@ -160,7 +99,7 @@
               </div>
               <div class="ml-4">
                 <p class="text-sm text-gray-400">Total Quotes</p>
-                <p class="text-2xl font-bold text-white">{@stats.total}</p>
+                <p class="text-2xl font-bold">{@stats.total}</p>
               </div>
             </div>
           </div>
@@ -185,7 +124,7 @@
               </div>
               <div class="ml-4">
                 <p class="text-sm text-gray-400">Published</p>
-                <p class="text-2xl font-bold text-white">{@stats.published}</p>
+                <p class="text-2xl font-bold">{@stats.published}</p>
               </div>
             </div>
           </div>
@@ -210,7 +149,7 @@
               </div>
               <div class="ml-4">
                 <p class="text-sm text-gray-400">Pending</p>
-                <p class="text-2xl font-bold text-white">{@stats.pending}</p>
+                <p class="text-2xl font-bold">{@stats.pending}</p>
               </div>
             </div>
           </div>
@@ -228,14 +167,14 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M16 7a4 4 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   >
                   </path>
                 </svg>
               </div>
               <div class="ml-4">
                 <p class="text-sm text-gray-400">Authors</p>
-                <p class="text-2xl font-bold text-white">{@stats.authors}</p>
+                <p class="text-2xl font-bold">{@stats.authors}</p>
               </div>
             </div>
           </div>
@@ -244,14 +183,14 @@
 <!-- Quotes Table -->
         <div class="bg-gray-800 rounded-lg border border-gray-700">
           <div class="p-6 border-b border-gray-700">
-            <h3 class="text-lg font-semibold text-white">All Quotes</h3>
+            <h3 class="text-lg font-semibold">Recent Quotes</h3>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead class="bg-gray-750">
                 <tr class="border-b border-gray-700">
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Quote Number
+                    Quote #
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Consignor
@@ -260,7 +199,7 @@
                     Consignee
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Service
+                    Service Type
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Status
@@ -274,37 +213,47 @@
                 <%= for quote <- @quotes do %>
                   <tr class="hover:bg-gray-750">
                     <td class="px-6 py-4 text-sm text-gray-200">
-                      {quote.quote_number || "N/A"}
+                      {quote.quote_number || "—"}
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-300">
-                      {quote.consignor_name || quote.author}
+                      {quote.consignor_name || quote.author || "—"}
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-300">
-                      {quote.consignee_name || "N/A"}
+                      {quote.consignee_name || "—"}
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-300">
-                      {quote.service_type_description || quote.category || "Standard"}
+                      {quote.service_type_description || quote.category || "—"}
                     </td>
                     <td class="px-6 py-4">
                       <span class={[
                         "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
-                        if(quote.status == "published",
-                          do: "bg-green-100 text-green-800",
-                          else: "bg-yellow-100 text-yellow-800"
-                        )
+                        case quote.status do
+                          "published" -> "bg-green-100 text-green-800"
+                          "pending" -> "bg-yellow-100 text-yellow-800"
+                          _ -> "bg-gray-100 text-gray-800"
+                        end
                       ]}>
                         {String.capitalize(quote.status)}
                       </span>
                     </td>
                     <td class="px-6 py-4 text-sm font-medium">
+                      <button class="text-blue-400 hover:text-blue-300 mr-3">Edit</button>
                       <button
                         phx-click="delete"
                         phx-value-id={quote.id}
-                        data-confirm="Are you sure?"
-                        class="text-red-400 hover:text-red-300 transition-colors"
+                        class="text-red-400 hover:text-red-300"
+                        data-confirm="Are you sure you want to delete this quote?"
                       >
                         Delete
                       </button>
+                    </td>
+                  </tr>
+                <% end %>
+
+                <%= if @quotes == [] do %>
+                  <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                      No quotes found. Click "Add Quote" to create your first quote.
                     </td>
                   </tr>
                 <% end %>
@@ -314,19 +263,14 @@
         </div>
       </main>
     </div>
-  </div>
-  
+    
 <!-- Add Quote Modal -->
-  <%= if @show_form do %>
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-7xl max-h-[95vh] overflow-y-auto mx-4">
-        <div class="p-6 border-b border-gray-700">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xl font-semibold text-white">Add New FreightWare Quote</h3>
-            <button
-              phx-click="toggle_form"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
+    <%= if @show_form do %>
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between p-6 border-b border-gray-700">
+            <h3 class="text-lg font-semibold text-white">Add New Quote</h3>
+            <button phx-click="toggle_form" class="text-gray-400 hover:text-white">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
@@ -338,571 +282,15 @@
               </svg>
             </button>
           </div>
-        </div>
 
-        <div class="p-6">
-          <.form
-            for={@form}
-            id="quote-form"
-            phx-change="validate"
-            phx-submit="save"
-            class="space-y-8"
-          >
-            <!-- 1. Core Quote Information -->
-            <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
-              <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
-                <svg
-                  class="w-5 h-5 mr-2 text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  >
-                  </path>
-                </svg>
-                Core Quote Information
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <.input
-                    field={@form[:quote_number]}
-                    type="text"
-                    label="Quote Number"
-                    placeholder="FW2024001"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:account_reference]}
-                    type="text"
-                    label="Account Reference"
-                    placeholder="ACC001"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:shipper_reference]}
-                    type="text"
-                    label="Shipper Reference"
-                    placeholder="SHIP001"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:service_type]}
-                    type="text"
-                    label="Service Type"
-                    placeholder="STD"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:service_type_description]}
-                    type="text"
-                    label="Service Description"
-                    placeholder="Standard Delivery"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignment_type]}
-                    type="text"
-                    label="Consignment Type"
-                    placeholder="PARCEL"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-              </div>
-            </div>
-            
-<!-- 2. Consignor (Sender) Information -->
-            <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
-              <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
-                <svg
-                  class="w-5 h-5 mr-2 text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  >
-                  </path>
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  >
-                  </path>
-                </svg>
-                Consignor (Sender) Information
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <.input
-                    field={@form[:consignor_name]}
-                    type="text"
-                    label="Company Name *"
-                    placeholder="ABC Manufacturing Ltd"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_contact_name]}
-                    type="text"
-                    label="Contact Name *"
-                    placeholder="John Doe"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_building]}
-                    type="text"
-                    label="Building/Unit *"
-                    placeholder="Building A, Unit 15"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_street]}
-                    type="text"
-                    label="Street Address *"
-                    placeholder="123 Industrial Road"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_suburb]}
-                    type="text"
-                    label="Suburb *"
-                    placeholder="Industrial Estate"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_city]}
-                    type="text"
-                    label="City *"
-                    placeholder="Johannesburg"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_postal_code]}
-                    type="text"
-                    label="Postal Code *"
-                    placeholder="2000"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignor_contact_tel]}
-                    type="text"
-                    label="Contact Phone *"
-                    placeholder="+27 11 123 4567"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-              </div>
-            </div>
-            
-<!-- 3. Consignee (Receiver) Information -->
-            <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
-              <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
-                <svg
-                  class="w-5 h-5 mr-2 text-orange-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  >
-                  </path>
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  >
-                  </path>
-                </svg>
-                Consignee (Receiver) Information
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <.input
-                    field={@form[:consignee_name]}
-                    type="text"
-                    label="Company Name *"
-                    placeholder="XYZ Retail Store"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_contact_name]}
-                    type="text"
-                    label="Contact Name *"
-                    placeholder="Jane Smith"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_building]}
-                    type="text"
-                    label="Building/Unit *"
-                    placeholder="Shop 5, Ground Floor"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_street]}
-                    type="text"
-                    label="Street Address *"
-                    placeholder="456 Main Street"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_suburb]}
-                    type="text"
-                    label="Suburb *"
-                    placeholder="City Center"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_city]}
-                    type="text"
-                    label="City *"
-                    placeholder="Cape Town"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_postal_code]}
-                    type="text"
-                    label="Postal Code *"
-                    placeholder="8000"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-                <div>
-                  <.input
-                    field={@form[:consignee_contact_tel]}
-                    type="text"
-                    label="Contact Phone *"
-                    placeholder="+27 21 987 6543"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
-                </div>
-              </div>
-            </div>
-            
-<!-- 4. Quote Items Section (FreightWare Specification) -->
-            <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
-              <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-semibold text-white flex items-center">
-                  <svg
-                    class="w-5 h-5 mr-2 text-purple-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-4.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7"
-                    >
-                    </path>
-                  </svg>
-                  Quote Items (FreightWare Format)
-                </h4>
-                <button
-                  type="button"
-                  phx-click="add_item"
-                  class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm text-white transition-colors font-medium"
-                >
-                  + Add Item
-                </button>
-              </div>
-              
-<!-- Items List -->
-              <div class="space-y-6">
-                <%= if assigns[:items] && @items != [] do %>
-                  <%= for {item, index} <- Enum.with_index(@items) do %>
-                    <div class="bg-gray-800 border border-gray-600 rounded-lg p-5">
-                      <div class="flex items-center justify-between mb-4">
-                        <h5 class="text-lg font-medium text-white flex items-center">
-                          <span class="bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm mr-2">
-                            {index + 1}
-                          </span>
-                          Item #{index + 1}
-                        </h5>
-                        <button
-                          type="button"
-                          phx-click="remove_item"
-                          phx-value-index={index}
-                          class="text-red-400 hover:text-red-300 text-sm transition-colors bg-red-900/20 hover:bg-red-900/40 px-3 py-1 rounded"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      
-<!-- Primary Item Fields (FreightWare Core) -->
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div class="md:col-span-2">
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Item Description *
-                          </label>
-                          <input
-                            type="text"
-                            name={"items[#{index}][description]"}
-                            value={item["description"] || ""}
-                            placeholder="Electronics, furniture, documents, etc."
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Quantity *
-                          </label>
-                          <input
-                            type="number"
-                            name={"items[#{index}][quantity]"}
-                            value={item["quantity"] || ""}
-                            placeholder="1"
-                            min="1"
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-                      </div>
-                      
-<!-- Physical Specifications -->
-                      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Weight (kg) *
-                          </label>
-                          <input
-                            type="number"
-                            name={"items[#{index}][weight]"}
-                            value={item["weight"] || ""}
-                            placeholder="10.5"
-                            step="0.01"
-                            min="0.01"
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Length (cm)
-                          </label>
-                          <input
-                            type="number"
-                            name={"items[#{index}][length]"}
-                            value={item["length"] || ""}
-                            placeholder="50"
-                            step="0.1"
-                            min="0"
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Width (cm)
-                          </label>
-                          <input
-                            type="number"
-                            name={"items[#{index}][width]"}
-                            value={item["width"] || ""}
-                            placeholder="30"
-                            step="0.1"
-                            min="0"
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Height (cm)
-                          </label>
-                          <input
-                            type="number"
-                            name={"items[#{index}][height]"}
-                            value={item["height"] || ""}
-                            placeholder="20"
-                            step="0.1"
-                            min="0"
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-                      </div>
-                      
-<!-- FreightWare Business Fields -->
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Unit Value (R)
-                          </label>
-                          <input
-                            type="number"
-                            name={"items[#{index}][unit_value]"}
-                            value={item["unit_value"] || ""}
-                            placeholder="1500.00"
-                            step="0.01"
-                            min="0"
-                            class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          />
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Package Type
-                          </label>
-                          <select
-                            name={"items[#{index}][package_type]"}
-                            class="w-full bg-gray-700 border border-gray-600 text-white focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          >
-                            <option value="">Select type</option>
-                            <option value="CARTON" selected={item["package_type"] == "CARTON"}>
-                              Carton
-                            </option>
-                            <option value="PALLET" selected={item["package_type"] == "PALLET"}>
-                              Pallet
-                            </option>
-                            <option value="ENVELOPE" selected={item["package_type"] == "ENVELOPE"}>
-                              Envelope
-                            </option>
-                            <option value="TUBE" selected={item["package_type"] == "TUBE"}>
-                              Tube
-                            </option>
-                            <option value="BAG" selected={item["package_type"] == "BAG"}>
-                              Bag
-                            </option>
-                            <option value="DRUM" selected={item["package_type"] == "DRUM"}>
-                              Drum
-                            </option>
-                            <option value="OTHER" selected={item["package_type"] == "OTHER"}>
-                              Other
-                            </option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label class="block text-sm font-medium text-gray-300 mb-2">
-                            Special Handling
-                          </label>
-                          <select
-                            name={"items[#{index}][special_handling]"}
-                            class="w-full bg-gray-700 border border-gray-600 text-white focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm"
-                          >
-                            <option value="">None</option>
-                            <option
-                              value="FRAGILE"
-                              selected={item["special_handling"] == "FRAGILE"}
-                            >
-                              Fragile
-                            </option>
-                            <option
-                              value="HAZARDOUS"
-                              selected={item["special_handling"] == "HAZARDOUS"}
-                            >
-                              Hazardous Material
-                            </option>
-                            <option
-                              value="PERISHABLE"
-                              selected={item["special_handling"] == "PERISHABLE"}
-                            >
-                              Perishable
-                            </option>
-                            <option value="LIQUID" selected={item["special_handling"] == "LIQUID"}>
-                              Liquid
-                            </option>
-                            <option
-                              value="HIGH_VALUE"
-                              selected={item["special_handling"] == "HIGH_VALUE"}
-                            >
-                              High Value
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-                      
-<!-- Additional Notes -->
-                      <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-300 mb-2">
-                          Special Instructions
-                        </label>
-                        <textarea
-                          name={"items[#{index}][special_instructions]"}
-                          rows="2"
-                          placeholder="Handle with care, refrigerate, assembly required, etc."
-                          class="w-full bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring focus:ring-purple-300 rounded-lg px-4 py-2 text-sm resize-none"
-                        >{item["special_instructions"] || ""}</textarea>
-                      </div>
-                    </div>
-                  <% end %>
-                <% else %>
-                  <div class="text-center py-12 text-gray-400 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600">
+          <.form for={@form} id="quote-form" phx-change="validate" phx-submit="save" class="p-6">
+            <div class="space-y-8">
+              <!-- Core Quote Information -->
+              <div class="bg-gray-750 rounded-lg p-6 border border-blue-600">
+                <div class="flex items-center mb-4">
+                  <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
                     <svg
-                      class="w-16 h-16 mx-auto mb-4 text-gray-500"
+                      class="w-4 h-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -910,161 +298,554 @@
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        stroke-width="1"
-                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-4.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       >
                       </path>
                     </svg>
-                    <h5 class="text-lg font-medium text-gray-300 mb-2">No items added yet</h5>
-                    <p class="text-sm mb-4">
-                      FreightWare quotes require at least one item to be specified
-                    </p>
-                    <button
-                      type="button"
-                      phx-click="add_item"
-                      class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm text-white transition-colors font-medium"
+                  </div>
+                  <h4 class="text-lg font-semibold text-blue-400">Core Quote Information</h4>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <.input
+                    field={@form[:quote_number]}
+                    type="text"
+                    label="Quote Number"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:account_reference]}
+                    type="text"
+                    label="Account Reference"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:shipper_reference]}
+                    type="text"
+                    label="Shipper Reference"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:service_type]}
+                    type="text"
+                    label="Service Type"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:service_type_description]}
+                    type="text"
+                    label="Service Type Description"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:quote_date]}
+                    type="date"
+                    label="Quote Date"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+              
+<!-- Consignor Information -->
+              <div class="bg-gray-750 rounded-lg p-6 border border-green-600">
+                <div class="flex items-center mb-4">
+                  <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      class="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      Add Your First Item
-                    </button>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      >
+                      </path>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      >
+                      </path>
+                    </svg>
+                  </div>
+                  <h4 class="text-lg font-semibold text-green-400">
+                    Consignor (Sender) Information
+                  </h4>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <.input
+                    field={@form[:consignor_name]}
+                    type="text"
+                    label="Company Name*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_contact_name]}
+                    type="text"
+                    label="Contact Name*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_building]}
+                    type="text"
+                    label="Building/Unit*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_street]}
+                    type="text"
+                    label="Street Address*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_suburb]}
+                    type="text"
+                    label="Suburb*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_city]}
+                    type="text"
+                    label="City*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_postal_code]}
+                    type="text"
+                    label="Postal Code*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignor_contact_tel]}
+                    type="text"
+                    label="Contact Phone*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500 focus:ring-green-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+              
+<!-- Consignee Information -->
+              <div class="bg-gray-750 rounded-lg p-6 border border-purple-600">
+                <div class="flex items-center mb-4">
+                  <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      class="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      >
+                      </path>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      >
+                      </path>
+                    </svg>
+                  </div>
+                  <h4 class="text-lg font-semibold text-purple-400">
+                    Consignee (Receiver) Information
+                  </h4>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <.input
+                    field={@form[:consignee_name]}
+                    type="text"
+                    label="Company Name*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_contact_name]}
+                    type="text"
+                    label="Contact Name*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_building]}
+                    type="text"
+                    label="Building/Unit*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_street]}
+                    type="text"
+                    label="Street Address*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_suburb]}
+                    type="text"
+                    label="Suburb*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_city]}
+                    type="text"
+                    label="City*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_postal_code]}
+                    type="text"
+                    label="Postal Code*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                  <.input
+                    field={@form[:consignee_contact_tel]}
+                    type="text"
+                    label="Contact Phone*"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+              
+<!-- Quote Items Section -->
+              <div class="bg-gray-750 rounded-lg p-6 border border-yellow-600">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center">
+                    <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center mr-3">
+                      <svg
+                        class="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        >
+                        </path>
+                      </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold text-yellow-400">Quote Items</h4>
+                  </div>
+                  <button
+                    type="button"
+                    phx-click="add_item"
+                    class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg text-sm font-medium text-white"
+                  >
+                    + Add Item
+                  </button>
+                </div>
+
+                <%= if @items != [] do %>
+                  <div class="overflow-x-auto">
+                    <table class="w-full border border-gray-600 rounded-lg">
+                      <thead class="bg-gray-700">
+                        <tr>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            Description*
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            Qty
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            Weight
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            L×W×H
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            Value
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            Package Type
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-r border-gray-600">
+                            Special Handling
+                          </th>
+                          <th class="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-gray-750 divide-y divide-gray-600">
+                        <%= for {item, index} <- Enum.with_index(@items) do %>
+                          <tr class="hover:bg-gray-700">
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <input
+                                type="text"
+                                name={"items[#{index}][description]"}
+                                value={item["description"] || ""}
+                                placeholder="Item description"
+                                class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <input
+                                type="number"
+                                name={"items[#{index}][quantity]"}
+                                value={item["quantity"] || ""}
+                                placeholder="1"
+                                class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <input
+                                type="number"
+                                step="0.01"
+                                name={"items[#{index}][weight]"}
+                                value={item["weight"] || ""}
+                                placeholder="0.00"
+                                class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <div class="flex space-x-1">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  name={"items[#{index}][length]"}
+                                  value={item["length"] || ""}
+                                  placeholder="L"
+                                  class="w-12 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-1 py-1 text-xs"
+                                />
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  name={"items[#{index}][width]"}
+                                  value={item["width"] || ""}
+                                  placeholder="W"
+                                  class="w-12 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-1 py-1 text-xs"
+                                />
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  name={"items[#{index}][height]"}
+                                  value={item["height"] || ""}
+                                  placeholder="H"
+                                  class="w-12 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-1 py-1 text-xs"
+                                />
+                              </div>
+                            </td>
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <input
+                                type="number"
+                                step="0.01"
+                                name={"items[#{index}][unit_value]"}
+                                value={item["unit_value"] || ""}
+                                placeholder="0.00"
+                                class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <input
+                                type="text"
+                                name={"items[#{index}][package_type]"}
+                                value={item["package_type"] || ""}
+                                placeholder="Box, Pallet..."
+                                class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td class="px-3 py-2 border-r border-gray-600">
+                              <input
+                                type="text"
+                                name={"items[#{index}][special_handling]"}
+                                value={item["special_handling"] || ""}
+                                placeholder="Fragile, DG..."
+                                class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td class="px-3 py-2">
+                              <button
+                                type="button"
+                                phx-click="remove_item"
+                                phx-value-index={index}
+                                class="text-red-400 hover:text-red-300"
+                              >
+                                <svg
+                                  class="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                  >
+                                  </path>
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                          
+<!-- Special Instructions Row -->
+                          <%= if item["special_instructions"] || item["special_instructions"] == "" do %>
+                            <tr class="bg-gray-800">
+                              <td colspan="8" class="px-3 py-2">
+                                <div class="text-xs text-gray-400 mb-1">
+                                  Special Instructions:
+                                </div>
+                                <textarea
+                                  name={"items[#{index}][special_instructions]"}
+                                  rows="2"
+                                  placeholder="Any special handling instructions..."
+                                  class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-yellow-500 rounded px-2 py-1 text-sm"
+                                ><%= item["special_instructions"] || "" %></textarea>
+                              </td>
+                            </tr>
+                          <% end %>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% else %>
+                  <div class="text-center py-8 text-gray-400">
+                    <svg
+                      class="w-12 h-12 mx-auto mb-4 text-gray-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      >
+                      </path>
+                    </svg>
+                    <p>No items added yet. Click "Add Item" to get started.</p>
                   </div>
                 <% end %>
               </div>
-            </div>
-            
-<!-- 5. Instructions & Additional Details -->
-            <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
-              <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
-                <svg
-                  class="w-5 h-5 mr-2 text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  >
-                  </path>
-                </svg>
-                Instructions & Additional Details
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <.input
-                    field={@form[:collection_instructions]}
-                    type="textarea"
-                    label="Collection Instructions"
-                    placeholder="Loading dock access, collection hours, contact person..."
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2 min-h-24 resize-none"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
+              
+<!-- Instructions & Details -->
+              <div class="bg-gray-750 rounded-lg p-6 border border-indigo-600">
+                <div class="flex items-center mb-4">
+                  <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      class="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      >
+                      </path>
+                    </svg>
+                  </div>
+                  <h4 class="text-lg font-semibold text-indigo-400">Instructions & Details</h4>
                 </div>
-                <div>
-                  <.input
-                    field={@form[:delivery_instructions]}
-                    type="textarea"
-                    label="Delivery Instructions"
-                    placeholder="Delivery hours, access codes, signature requirements..."
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2 min-h-24 resize-none"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
-                  />
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      Collection Instructions
+                    </label>
+                    <textarea
+                      name="quote[collection_instructions]"
+                      rows="3"
+                      placeholder="Special collection instructions..."
+                      class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg px-4 py-2"
+                    ><%= Phoenix.HTML.Form.input_value(@form, :collection_instructions) %></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      Delivery Instructions
+                    </label>
+                    <textarea
+                      name="quote[delivery_instructions]"
+                      rows="3"
+                      placeholder="Special delivery instructions..."
+                      class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg px-4 py-2"
+                    ><%= Phoenix.HTML.Form.input_value(@form, :delivery_instructions) %></textarea>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-<!-- 6. Legacy Fields for Backwards Compatibility -->
-            <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
-              <h4 class="text-lg font-semibold text-white mb-4 flex items-center">
-                <svg
-                  class="w-5 h-5 mr-2 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  >
-                  </path>
-                </svg>
-                Legacy Content (Optional)
-              </h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+              
+<!-- Legacy Content Fields -->
+              <div class="bg-gray-750 rounded-lg p-6 border border-gray-600">
+                <div class="flex items-center mb-4">
+                  <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      class="w-4 h-4 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m10 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V8"
+                      >
+                      </path>
+                    </svg>
+                  </div>
+                  <h4 class="text-lg font-semibold text-gray-400">Legacy Content (Optional)</h4>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <.input
                     field={@form[:content]}
                     type="textarea"
                     label="Content"
-                    placeholder="Additional quote description or notes..."
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2 min-h-20 resize-none"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-gray-500 focus:ring-gray-500 rounded-lg px-4 py-2"
                   />
-                </div>
-                <div>
                   <.input
                     field={@form[:author]}
                     type="text"
                     label="Author"
-                    placeholder="Quote author or sales rep"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-gray-500 focus:ring-gray-500 rounded-lg px-4 py-2"
                   />
-                </div>
-                <div>
                   <.input
                     field={@form[:source]}
                     type="text"
                     label="Source"
-                    placeholder="Quote source system"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-gray-500 focus:ring-gray-500 rounded-lg px-4 py-2"
                   />
-                </div>
-                <div>
                   <.input
                     field={@form[:category]}
                     type="text"
                     label="Category"
-                    placeholder="Quote category or type"
-                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
-                    error_class="border-red-400 focus:border-red-500 focus:ring focus:ring-red-300"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-gray-500 focus:ring-gray-500 rounded-lg px-4 py-2"
                   />
                 </div>
               </div>
             </div>
             
 <!-- Form Actions -->
-            <div class="flex justify-end space-x-4 border-t border-gray-700 pt-6">
+            <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-700">
               <button
                 type="button"
                 phx-click="toggle_form"
-                class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium"
+                class="px-6 py-2 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  >
-                  </path>
-                </svg>
-                Save Quote
+                Create Quote
               </button>
             </div>
           </.form>
         </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </Layouts.app>
