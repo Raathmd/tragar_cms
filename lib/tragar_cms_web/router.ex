@@ -17,7 +17,7 @@ defmodule TragarCmsWeb.Router do
   scope "/", TragarCmsWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", QuotesLive
   end
 
   # Other scopes may use custom stacks.
