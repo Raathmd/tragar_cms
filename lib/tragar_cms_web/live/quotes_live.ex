@@ -13,7 +13,7 @@ defmodule TragarCmsWeb.QuotesLive do
 
     quotes = Quotes.list_quotes()
     stats = Quote.get_stats(quotes)
-    sync_status = QuoteSync.get_status()
+    sync_status = get_sync_status_safely()
 
     {:ok,
      socket
@@ -114,7 +114,7 @@ defmodule TragarCmsWeb.QuotesLive do
   def handle_info({:sync_completed, created_count}, socket) do
     quotes = Quotes.list_quotes()
     stats = Quote.get_stats(quotes)
-    sync_status = QuoteSync.get_status()
+    sync_status = get_sync_status_safely()
 
     message =
       if created_count > 0 do
