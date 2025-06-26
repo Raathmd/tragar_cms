@@ -29,7 +29,11 @@ defmodule TragarCms.TragarApi do
       station: station
     }
 
-    case Req.post("#{@base_url}/FreightWare/V1/system/auth/login", json: body) do
+    case Req.post("#{@base_url}/FreightWare/V2/system/auth/login",
+           json: body,
+           receive_timeout: 30_000,
+           connect_options: [timeout: 30_000]
+         ) do
       {:ok, %{status: 200, headers: headers}} ->
         case extract_auth_token(headers) do
           {:ok, token} ->
