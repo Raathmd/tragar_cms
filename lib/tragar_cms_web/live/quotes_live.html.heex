@@ -319,7 +319,7 @@
 <!-- Add Quote Modal -->
   <%= if @show_form do %>
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+      <div class="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-6xl max-h-[90vh] overflow-y-auto mx-4">
         <div class="p-6 border-b border-gray-700">
           <div class="flex items-center justify-between">
             <h3 class="text-xl font-semibold text-white">Add New Quote</h3>
@@ -556,6 +556,837 @@
                     class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
                   />
                 </div>
+              </div>
+            </div>
+
+            <!-- Quote Items Section -->
+            <div class="border-t border-gray-700 pt-6">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-white">Quote Items</h4>
+                <button
+                  type="button"
+                  phx-click="add_item"
+                  class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm text-white transition-colors"
+                >
+                  + Add Item
+                </button>
+              </div>
+              
+              <!-- Items List -->
+              <div class="space-y-4">
+                <%= if assigns[:items] && @items != [] do %>
+                  <%= for {item, index} <- Enum.with_index(@items) do %>
+                    <div class="bg-gray-750 border border-gray-600 rounded-lg p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <h5 class="text-sm font-medium text-gray-300">Item #{index + 1}</h5>
+                        <button
+                          type="button"
+                          phx-click="remove_item"
+                          phx-value-index={index}
+                          class="text-red-400 hover:text-red-300 text-sm transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      
+                      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                          <input
+                            type="text"
+                            name={"items[#{index}][description]"}
+                            value={item["description"] || ""}
+                            placeholder="Item description"
+                            class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Quantity</label>
+                          <input
+                            type="number"
+                            name={"items[#{index}][quantity]"}
+                            value={item["quantity"] || ""}
+                            placeholder="Qty"
+                            min="1"
+                            class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Weight (kg)</label>
+                          <input
+                            type="number"
+                            name={"items[#{index}][weight]"}
+                            value={item["weight"] || ""}
+                            placeholder="Weight"
+                            step="0.01"
+                            min="0"
+                            class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Dimensions</label>
+                          <input
+                            type="text"
+                            name={"items[#{index}][dimensions]"}
+                            value={item["dimensions"] || ""}
+                            placeholder="L x W x H cm"
+                            class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Unit Price</label>
+                          <input
+                            type="number"
+                            name={"items[#{index}][unit_price]"}
+                            value={item["unit_price"] || ""}
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Item Type</label>
+                          <select
+                            name={"items[#{index}][item_type]"}
+                            class="w-full bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          >
+                            <option value="">Select type</option>
+                            <option value="package" selected={item["item_type"] == "package"}>Package</option>
+                            <option value="pallet" selected={item["item_type"] == "pallet"}>Pallet</option>
+                            <option value="carton" selected={item["item_type"] == "carton"}>Carton</option>
+                            <option value="envelope" selected={item["item_type"] == "envelope"}>Envelope</option>
+                            <option value="other" selected={item["item_type"] == "other"}>Other</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label class="block text-sm font-medium text-gray-300 mb-1">Special Instructions</label>
+                          <input
+                            type="text"
+                            name={"items[#{index}][special_instructions]"}
+                            value={item["special_instructions"] || ""}
+                            placeholder="Fragile, hazardous, etc."
+                            class="w-full bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <div class="text-center py-8 text-gray-400">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-4.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7"></path>
+                    </svg>
+                    <p>No items added yet</p>
+                    <p class="text-sm">Click "Add Item" to start adding quote items</p>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+<!-- Instructions and Additional Info -->
+            <div class="border-t border-gray-700 pt-6">
+              <h4 class="text-lg font-semib<Layouts.app flash={@flash}>
+  <div class="min-h-screen bg-gray-900 text-white">
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 left-0 w-64 bg-gray-800 border-r border-gray-700">
+      <div class="flex items-center h-16 px-6 border-b border-gray-700">
+        <h1 class="text-xl font-bold text-blue-400">Tragar CMS</h1>
+      </div>
+      <nav class="mt-6">
+        <a
+          href="/"
+          class="flex items-center px-6 py-3 text-blue-400 bg-gray-700 border-r-2 border-blue-400"
+        >
+          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            >
+            </path>
+          </svg>
+          Dashboard
+        </a>
+      </nav>
+    </div>
+    
+<!-- Main Content -->
+    <div class="ml-64">
+      <!-- Header -->
+      <header class="bg-gray-800 border-b border-gray-700 h-16 flex items-center justify-between px-6">
+        <h2 class="text-xl font-semibold text-white">Quote Management Dashboard</h2>
+        <div class="flex items-center space-x-4">
+          <button
+            phx-click="sync_from_tragar"
+            class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+          >
+            🔄 Sync from Tragar
+          </button>
+          <button
+            phx-click="toggle_form"
+            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+          >
+            + Add Quote
+          </button>
+        </div>
+      </header>
+      
+<!-- Dashboard Content -->
+      <main class="p-6">
+        <!-- API Status Banner -->
+        <div class="mb-6">
+          <%= case @sync_status.status do %>
+            <% :syncing -> %>
+              <div class="bg-yellow-900 border border-yellow-600 rounded-lg p-4">
+                <div class="flex items-center">
+                  <svg
+                    class="animate-spin h-5 w-5 text-yellow-400 mr-3"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    >
+                    </circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    >
+                    </path>
+                  </svg>
+                  <span class="text-yellow-100">Syncing quotes from Tragar API...</span>
+                </div>
+              </div>
+            <% :success -> %>
+              <div class="bg-green-900 border border-green-600 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <svg
+                      class="h-5 w-5 text-green-400 mr-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd"
+                      >
+                      </path>
+                    </svg>
+                    <span class="text-green-100">API Connected</span>
+                  </div>
+                  <%= if @sync_status.last_sync do %>
+                    <span class="text-green-300 text-sm">
+                      Last sync: {Calendar.strftime(@sync_status.last_sync, "%H:%M")}
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% :error -> %>
+              <div class="bg-red-900 border border-red-600 rounded-lg p-4">
+                <div class="flex items-center">
+                  <svg class="h-5 w-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fill-rule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clip-rule="evenodd"
+                    >
+                    </path>
+                  </svg>
+                  <span class="text-red-100">
+                    API Error: {@sync_status.error || "Connection failed"}
+                  </span>
+                </div>
+              </div>
+            <% _ -> %>
+              <div class="bg-gray-800 border border-gray-600 rounded-lg p-4">
+                <div class="flex items-center">
+                  <svg class="h-5 w-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832L14 10.202a1 1 0 000-1.664l-4.445-2.37z"
+                      clip-rule="evenodd"
+                    >
+                    </path>
+                  </svg>
+                  <span class="text-gray-300">
+                    API Ready - Click "Sync from Tragar" to fetch quotes
+                  </span>
+                </div>
+              </div>
+          <% end %>
+        </div>
+        
+<!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center">
+              <div class="p-3 bg-blue-600 rounded-lg">
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  >
+                  </path>
+                </svg>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-400">Total Quotes</p>
+                <p class="text-2xl font-bold text-white">{@stats.total}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center">
+              <div class="p-3 bg-green-600 rounded-lg">
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  >
+                  </path>
+                </svg>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-400">Published</p>
+                <p class="text-2xl font-bold text-white">{@stats.published}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center">
+              <div class="p-3 bg-yellow-600 rounded-lg">
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  >
+                  </path>
+                </svg>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-400">Pending</p>
+                <p class="text-2xl font-bold text-white">{@stats.pending}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <div class="flex items-center">
+              <div class="p-3 bg-purple-600 rounded-lg">
+                <svg
+                  class="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  >
+                  </path>
+                </svg>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm text-gray-400">Authors</p>
+                <p class="text-2xl font-bold text-white">{@stats.authors}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+<!-- Quotes Table -->
+        <div class="bg-gray-800 rounded-lg border border-gray-700">
+          <div class="p-6 border-b border-gray-700">
+            <h3 class="text-lg font-semibold text-white">All Quotes</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-750">
+                <tr class="border-b border-gray-700">
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Quote Number
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Consignor
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Consignee
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-700">
+                <%= for quote <- @quotes do %>
+                  <tr class="hover:bg-gray-750">
+                    <td class="px-6 py-4 text-sm text-gray-200">
+                      {quote.quote_number || "N/A"}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-300">
+                      {quote.consignor_name || quote.author}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-300">
+                      {quote.consignee_name || "N/A"}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-300">
+                      {quote.service_type_description || quote.category || "Standard"}
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class={[
+                        "inline-flex px-2 py-1 text-xs font-semibold rounded-full",
+                        if(quote.status == "published",
+                          do: "bg-green-100 text-green-800",
+                          else: "bg-yellow-100 text-yellow-800"
+                        )
+                      ]}>
+                        {String.capitalize(quote.status)}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-medium">
+                      <button
+                        phx-click="delete"
+                        phx-value-id={quote.id}
+                        data-confirm="Are you sure?"
+                        class="text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  
+<!-- Add Quote Modal -->
+  <%= if @show_form do %>
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-6xl max-h-[95vh] overflow-y-auto mx-4">
+        <div class="p-6 border-b border-gray-700">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-semibold text-white">Add New Quote</h3>
+            <button
+              phx-click="toggle_form"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                >
+                </path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <.form
+            for={@form}
+            id="quote-form"
+            phx-change="validate"
+            phx-submit="save"
+            class="space-y-6"
+          >
+            <!-- Core Quote Information -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <.input
+                  field={@form[:quote_number]}
+                  type="text"
+                  label="Quote Number"
+                  placeholder="Auto-generated if empty"
+                  class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                />
+              </div>
+              <div>
+                <.input
+                  field={@form[:account_reference]}
+                  type="text"
+                  label="Account Reference"
+                  placeholder="Account reference"
+                  class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                />
+              </div>
+              <div>
+                <.input
+                  field={@form[:shipper_reference]}
+                  type="text"
+                  label="Shipper Reference"
+                  placeholder="Shipper reference"
+                  class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                />
+              </div>
+            </div>
+            
+<!-- Service Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <.input
+                  field={@form[:service_type]}
+                  type="text"
+                  label="Service Type"
+                  placeholder="Service type code"
+                  class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                />
+              </div>
+              <div>
+                <.input
+                  field={@form[:service_type_description]}
+                  type="text"
+                  label="Service Description"
+                  placeholder="Service type description"
+                  class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                />
+              </div>
+            </div>
+            
+<!-- Consignor Information -->
+            <div class="border-t border-gray-700 pt-6">
+              <h4 class="text-lg font-semibold text-white mb-4">Consignor (Sender)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <.input
+                    field={@form[:consignor_name]}
+                    type="text"
+                    label="Company Name"
+                    placeholder="Consignor company name"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_contact_name]}
+                    type="text"
+                    label="Contact Name"
+                    placeholder="Contact person name"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_building]}
+                    type="text"
+                    label="Building/Unit"
+                    placeholder="Building or unit number"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_street]}
+                    type="text"
+                    label="Street Address"
+                    placeholder="Street address"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_suburb]}
+                    type="text"
+                    label="Suburb"
+                    placeholder="Suburb"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_city]}
+                    type="text"
+                    label="City"
+                    placeholder="City"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_postal_code]}
+                    type="text"
+                    label="Postal Code"
+                    placeholder="Postal code"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignor_contact_tel]}
+                    type="text"
+                    label="Contact Phone"
+                    placeholder="Contact phone number"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+            </div>
+            
+<!-- Consignee Information -->
+            <div class="border-t border-gray-700 pt-6">
+              <h4 class="text-lg font-semibold text-white mb-4">Consignee (Receiver)</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <.input
+                    field={@form[:consignee_name]}
+                    type="text"
+                    label="Company Name"
+                    placeholder="Consignee company name"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_contact_name]}
+                    type="text"
+                    label="Contact Name"
+                    placeholder="Contact person name"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_building]}
+                    type="text"
+                    label="Building/Unit"
+                    placeholder="Building or unit number"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_street]}
+                    type="text"
+                    label="Street Address"
+                    placeholder="Street address"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_suburb]}
+                    type="text"
+                    label="Suburb"
+                    placeholder="Suburb"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_city]}
+                    type="text"
+                    label="City"
+                    placeholder="City"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_postal_code]}
+                    type="text"
+                    label="Postal Code"
+                    placeholder="Postal code"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+                <div>
+                  <.input
+                    field={@form[:consignee_contact_tel]}
+                    type="text"
+                    label="Contact Phone"
+                    placeholder="Contact phone number"
+                    class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-4 py-2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Quote Items Section -->
+            <div class="border-t border-gray-700 pt-6">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-white">Quote Items</h4>
+                <button
+                  type="button"
+                  phx-click="add_item"
+                  class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-medium text-white transition-colors"
+                >
+                  + Add Item
+                </button>
+              </div>
+
+              <div id="quote-items" class="space-y-4">
+                <%= for {item_form, index} <- Enum.with_index(@form[:items] || []) do %>
+                  <div class="bg-gray-750 border border-gray-600 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h5 class="text-md font-medium text-white">Item #{index + 1}</h5>
+                      <button
+                        type="button"
+                        phx-click="remove_item"
+                        phx-value-index={index}
+                        class="text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <.input
+                          field={item_form[:description]}
+                          type="text"
+                          label="Description"
+                          placeholder="Item description"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:quantity]}
+                          type="number"
+                          label="Quantity"
+                          placeholder="0"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:weight]}
+                          type="number"
+                          step="0.01"
+                          label="Weight (kg)"
+                          placeholder="0.00"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:length]}
+                          type="number"
+                          step="0.01"
+                          label="Length (cm)"
+                          placeholder="0.00"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:width]}
+                          type="number"
+                          step="0.01"
+                          label="Width (cm)"
+                          placeholder="0.00"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:height]}
+                          type="number"
+                          step="0.01"
+                          label="Height (cm)"
+                          placeholder="0.00"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:category]}
+                          type="text"
+                          label="Category"
+                          placeholder="Item category"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <.input
+                          field={item_form[:value]}
+                          type="number"
+                          step="0.01"
+                          label="Value (R)"
+                          placeholder="0.00"
+                          class="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Fragile</label>
+                        <input
+                          type="checkbox"
+                          name={item_form[:fragile].name}
+                          value="true"
+                          checked={Phoenix.HTML.Form.input_value(item_form, :fragile)}
+                          class="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+
+                <!-- Default message when no items -->
+                <%= if Enum.empty?(@form[:items] || []) do %>
+                  <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <h3 class="text-sm font-medium text-gray-400 mb-1">No items added</h3>
+                    <p class="text-xs text-gray-500">Click "Add Item" to add quote line items.</p>
+                  </div>
+                <% end %>
               </div>
             </div>
             
