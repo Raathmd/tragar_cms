@@ -98,18 +98,28 @@ defmodule TragarCms.TragarApi do
   defp fetch_quotes_with_token(token, opts) do
     limit = Keyword.get(opts, :limit, 10)
 
-    # This is a placeholder endpoint - update with actual FreightWare quote endpoint
-    _headers = [{"Authorization", "Bearer #{token}"}]
+    headers = [{"X-FreightWare", token}]
 
-    # For now, we'll simulate quotes since we don't have the actual quote endpoint
-    # In production, this would be something like:
-    # case Req.get("#{@base_url}/FreightWare/V1/quotes", headers: headers, params: [limit: limit]) do
+    # Use the real FreightWare V1 quotes endpoint
+    case Req.get("#{@base_url}/FreightWare/V1/quotes/",
+           headers: headers,
+           receive_timeout: 30_000,
+           connect_options: [timeout: 30_000]
+         ) do
+      {:ok, %{status: 200, body: body}} when is_map(body) ->
+        Logger.info("Successfully fetched quotes from FreightWare")
+        quotes = parse_freightware_quotes(body, limit)
+        {:ok, quotes}
 
-    Logger.info("Simulating quote fetch with FreightWare token")
+      {:ok, %{status: status, body: body}} ->
+        Logger.error("FreightWare quotes request failed with status: #{status}")
+        Logger.error("Response body: #{inspect(body)}")
+        {:error, "Failed to fetch quotes: HTTP #{status}"}
 
-    # Generate sample quotes for demonstration
-    quotes = generate_sample_quotes(limit)
-    {:ok, quotes}
+      {:error, reason} ->
+        Logger.error("Failed to fetch quotes from FreightWare: #{inspect(reason)}")
+        {:error, "Request failed: #{inspect(reason)}"}
+    end
   end
 
   defp extract_auth_token(headers) do
