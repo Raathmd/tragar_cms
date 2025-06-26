@@ -111,6 +111,15 @@ defmodule TragarCmsWeb.QuotesLive do
   end
 
   @impl true
+
+  defp get_sync_status_safely do
+    try do
+      QuoteSync.get_status()
+    catch
+      :exit, _ -> %{status: :idle, last_sync: nil, error: nil}
+    end
+  end
+
   def handle_info({:sync_completed, created_count}, socket) do
     quotes = Quotes.list_quotes()
     stats = Quote.get_stats(quotes)
