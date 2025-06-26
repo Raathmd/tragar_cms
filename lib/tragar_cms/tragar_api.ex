@@ -151,7 +151,7 @@ defmodule TragarCms.TragarApi do
         quotes = parse_freightware_quotes(body, opts)
         {:ok, quotes}
 
-      {:ok, %{status: status, body: body}} ->
+      {:ok, %{status: status, body: _body}} ->
         Logger.error("FreightWare quotes request failed with status: #{status}")
         Logger.error("Response body: #{inspect(body)}")
         {:error, "Failed to fetch quotes: HTTP #{status}"}
@@ -178,7 +178,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully created quote in FreightWare")
         {:ok, response}
 
-      {:ok, %{status: status, body: body}} ->
+      {:ok, %{status: status, body: _body}} ->
         Logger.error("FreightWare quote creation failed with status: #{status}")
         Logger.error("Response body: #{inspect(body)}")
         {:error, "Failed to create quote: HTTP #{status}"}
@@ -212,7 +212,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully accepted quote #{quote_obj}")
         {:ok, :accepted}
 
-      {:ok, %{status: status, body: body}} ->
+      {:ok, %{status: status, body: _body}} ->
         Logger.error("FreightWare quote acceptance failed with status: #{status}")
         {:error, "Failed to accept quote: HTTP #{status}"}
 
@@ -328,7 +328,7 @@ defmodule TragarCms.TragarApi do
             |> Enum.map(&convert_freightware_quote_to_cms_format/1)
 
           {:error, _} ->
-            Logger.warn("Failed to parse FreightWare quotes JSON response")
+            Logger.warning("Failed to parse FreightWare quotes JSON response")
             generate_sample_quotes(limit)
         end
 
@@ -340,7 +340,7 @@ defmodule TragarCms.TragarApi do
         |> Enum.map(&convert_freightware_quote_to_cms_format/1)
 
       _ ->
-        Logger.warn("Unexpected FreightWare response format: #{inspect(body)}")
+        Logger.warning("Unexpected FreightWare response format: #{inspect(body)}")
         generate_sample_quotes(limit)
     end
   end
