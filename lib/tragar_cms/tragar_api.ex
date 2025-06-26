@@ -95,7 +95,7 @@ defmodule TragarCms.TragarApi do
     limit = Keyword.get(opts, :limit, 10)
 
     # This is a placeholder endpoint - update with actual FreightWare quote endpoint
-    headers = [{"Authorization", "Bearer #{token}"}]
+    _headers = [{"Authorization", "Bearer #{token}"}]
 
     # For now, we'll simulate quotes since we don't have the actual quote endpoint
     # In production, this would be something like:
