@@ -7,7 +7,7 @@ defmodule TragarCms.TragarApi do
   require Logger
 
   # FreightWare API base URL - update this to your actual FreightWare server
-  @base_url "https://your-freightware-server.com"
+  @base_url "http://tragar-db.dovetail.co.za:5001/WebServices/web"
 
   # Default credentials - these should be moved to config in production
   @default_username "your_username"
