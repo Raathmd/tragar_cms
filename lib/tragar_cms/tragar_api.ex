@@ -10,9 +10,9 @@ defmodule TragarCms.TragarApi do
   @base_url "http://tragar-db.dovetail.co.za:5001/WebServices/web"
 
   # Default credentials - these should be moved to config in production
-  @default_username "your_username"
-  @default_password "your_password"
-  @default_station "your_station"
+  @default_username System.get_env("TRAGAR_USERNAME", "demo_user")
+  @default_password System.get_env("TRAGAR_PASSWORD", "demo_pass")
+  @default_station System.get_env("TRAGAR_STATION", "demo_station")
 
   @doc """
   Authenticates with FreightWare and returns the auth token.
