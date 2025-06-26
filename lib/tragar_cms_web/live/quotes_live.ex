@@ -3,6 +3,7 @@ defmodule TragarCmsWeb.QuotesLive do
 
   alias TragarCms.Quotes
   alias TragarCms.Quotes.Quote
+  alias TragarCms.QuoteSync
 
   @impl true
   def mount(_params, _session, socket) do
@@ -12,11 +13,13 @@ defmodule TragarCmsWeb.QuotesLive do
 
     quotes = Quotes.list_quotes()
     stats = Quote.get_stats(quotes)
+    sync_status = QuoteSync.get_status()
 
     {:ok,
      socket
      |> assign(:quotes, quotes)
      |> assign(:stats, stats)
+     |> assign(:sync_status, sync_status)
      |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
      |> assign(:show_form, false)}
   end
@@ -24,6 +27,16 @@ defmodule TragarCmsWeb.QuotesLive do
   @impl true
   def handle_event("toggle_form", _params, socket) do
     {:noreply, assign(socket, :show_form, !socket.assigns.show_form)}
+  end
+
+  @impl true
+  def handle_event("sync_from_tragar", _params, socket) do
+    QuoteSync.sync_now()
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "Syncing quotes from Tragar API...")
+     |> assign(:sync_status, %{status: :syncing, last_sync: DateTime.utc_now(), error: nil})}
   end
 
   @impl true
@@ -95,5 +108,26 @@ defmodule TragarCmsWeb.QuotesLive do
      socket
      |> assign(:quotes, quotes)
      |> assign(:stats, stats)}
+  end
+
+  @impl true
+  def handle_info({:sync_completed, created_count}, socket) do
+    quotes = Quotes.list_quotes()
+    stats = Quote.get_stats(quotes)
+    sync_status = QuoteSync.get_status()
+
+    message =
+      if created_count > 0 do
+        "Successfully synced #{created_count} new quotes from Tragar API!"
+      else
+        "Sync complete - no new quotes found."
+      end
+
+    {:noreply,
+     socket
+     |> assign(:quotes, quotes)
+     |> assign(:stats, stats)
+     |> assign(:sync_status, sync_status)
+     |> put_flash(:info, message)}
   end
 end
