@@ -14,6 +14,8 @@ defmodule TragarCms.Application do
        repos: Application.fetch_env!(:tragar_cms, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:tragar_cms, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: TragarCms.PubSub},
+      # Start the quote sync worker
+      TragarCms.QuoteSync,
       # Start a worker by calling: TragarCms.Worker.start_link(arg)
       # {TragarCms.Worker, arg},
       # Start to serve requests, typically the last entry
