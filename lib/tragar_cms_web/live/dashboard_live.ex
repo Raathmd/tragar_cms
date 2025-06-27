@@ -15,6 +15,7 @@ defmodule TragarCmsWeb.DashboardLive do
       socket
       |> assign(:show_form, false)
       |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
+      |> assign(:items, [])
       |> load_quotes()
       |> calculate_stats()
 
@@ -23,32 +24,92 @@ defmodule TragarCmsWeb.DashboardLive do
 
   @impl true
   def handle_event("toggle_form", _params, socket) do
-    {:noreply, assign(socket, :show_form, !socket.assigns.show_form)}
+    {:noreply,
+     socket
+     |> assign(:show_form, !socket.assigns.show_form)
+     |> assign(:items, [])}
   end
 
   @impl true
-  def handle_event("validate", %{"quote" => quote_params}, socket) do
-    changeset = Quotes.change_quote(%Quote{}, quote_params)
-    {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
+  def handle_event("add_item", _params, socket) do
+    new_item = %{
+      "description" => "",
+      "quantity" => "",
+      "weight" => "",
+      "length" => "",
+      "width" => "",
+      "height" => "",
+      "unit_value" => "",
+      "package_type" => "",
+      "special_handling" => "",
+      "special_instructions" => ""
+    }
+
+    items = socket.assigns.items ++ [new_item]
+    {:noreply, assign(socket, :items, items)}
   end
 
   @impl true
-  def handle_event("save", %{"quote" => quote_params, "action" => action}, socket) do
-    case action do
-      "quick_quote" ->
-        handle_quick_quote(quote_params, socket)
+  def handle_event("remove_item", %{"index" => index_str}, socket) do
+    index = String.to_integer(index_str)
+    items = socket.assigns.items |> List.delete_at(index)
+    {:noreply, assign(socket, :items, items)}
+  end
 
-      "full_quote" ->
-        handle_full_quote(quote_params, socket)
+  @impl true
+  def handle_event("validate", %{"quote" => quote_params} = params, socket) do
+    # Extract items from params if present
+    items = extract_items_from_params(params)
 
-      _other ->
-        handle_regular_quote(quote_params, socket)
+    changeset =
+      %Quote{}
+      |> Quotes.change_quote(quote_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply,
+     socket
+     |> assign(:form, to_form(changeset))
+     |> assign(:items, items)}
+  end
+
+  @impl true
+  def handle_event("save", %{"quote" => quote_params} = params, socket) do
+    # Extract and process items according to FreightWare specification
+    items = extract_items_from_params(params)
+    quote_params_with_items = Map.put(quote_params, "items", items)
+
+    case Quotes.create_quote(quote_params_with_items) do
+      {:ok, quote} ->
+        Phoenix.PubSub.broadcast(TragarCms.PubSub, "quotes", {:quote_created, quote})
+
+        socket =
+          socket
+          |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
+          |> assign(:show_form, false)
+          |> assign(:items, [])
+          |> put_flash(:info, "Quote created successfully!")
+          |> load_quotes()
+          |> calculate_stats()
+
+        {:noreply, socket}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
     end
   end
 
   @impl true
-  def handle_event("save", %{"quote" => quote_params}, socket) do
-    handle_regular_quote(quote_params, socket)
+  def handle_event("save", %{"quote" => quote_params, "action" => action} = params, socket) do
+    case action do
+      "quick_quote" ->
+        handle_quick_quote(quote_params, params, socket)
+
+      "full_quote" ->
+        handle_full_quote(quote_params, params, socket)
+
+      _other ->
+        handle_regular_quote(quote_params, params, socket)
+    end
   end
 
   @impl true
@@ -130,8 +191,9 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Handle quick quote request to FreightWare API
-  defp handle_quick_quote(quote_params, socket) do
-    shipment_data = build_shipment_data(quote_params)
+  defp handle_quick_quote(quote_params, params, socket) do
+    items = extract_items_from_params(params)
+    shipment_data = build_shipment_data(quote_params, items)
 
     case TragarApi.quick_quote(shipment_data) do
       {:ok, response} ->
@@ -143,7 +205,10 @@ defmodule TragarCmsWeb.DashboardLive do
           "status" => "pending",
           "total_amount" => extract_total_amount_from_response(response),
           "quote_type" => "quick_quote",
-          "api_response" => Jason.encode!(response)
+          "api_response" => Jason.encode!(response),
+          "consignor_name" => Map.get(quote_params, "consignor_name"),
+          "consignee_name" => Map.get(quote_params, "consignee_name"),
+          "items" => items
         }
 
         case Quotes.create_quote(quick_quote_attrs) do
@@ -154,6 +219,7 @@ defmodule TragarCmsWeb.DashboardLive do
               socket
               |> assign(:show_form, false)
               |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
+              |> assign(:items, [])
               |> put_flash(:info, "Quick quote retrieved successfully")
               |> load_quotes()
               |> calculate_stats()
@@ -174,21 +240,24 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Handle full quote creation to FreightWare API
-  defp handle_full_quote(quote_params, socket) do
-    quote_data = build_quote_data(quote_params)
+  defp handle_full_quote(quote_params, params, socket) do
+    items = extract_items_from_params(params)
+    quote_data = build_quote_data(quote_params, items)
 
     case TragarApi.create_quote(quote_data) do
       {:ok, response} ->
         # Save the full quote to local database
-        full_quote_attrs = %{
-          "author" => "FreightWare API",
-          "content" =>
-            "Full Quote: #{Map.get(quote_params, "consignor_name", "Unknown")} to #{Map.get(quote_params, "consignee_name", "Unknown")}",
-          "status" => "pending",
-          "total_amount" => extract_total_amount_from_response(response),
-          "quote_type" => "quote",
-          "api_response" => Jason.encode!(response)
-        }
+        full_quote_attrs =
+          Map.merge(quote_params, %{
+            "author" => "FreightWare API",
+            "content" =>
+              "Full Quote: #{Map.get(quote_params, "consignor_name", "Unknown")} to #{Map.get(quote_params, "consignee_name", "Unknown")}",
+            "status" => "pending",
+            "total_amount" => extract_total_amount_from_response(response),
+            "quote_type" => "quote",
+            "api_response" => Jason.encode!(response),
+            "items" => items
+          })
 
         case Quotes.create_quote(full_quote_attrs) do
           {:ok, quote} ->
@@ -198,6 +267,7 @@ defmodule TragarCmsWeb.DashboardLive do
               socket
               |> assign(:show_form, false)
               |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
+              |> assign(:items, [])
               |> put_flash(:info, "Full quote created successfully")
               |> load_quotes()
               |> calculate_stats()
@@ -218,8 +288,11 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Handle regular quote creation (local only)
-  defp handle_regular_quote(quote_params, socket) do
-    case Quotes.create_quote(quote_params) do
+  defp handle_regular_quote(quote_params, params, socket) do
+    items = extract_items_from_params(params)
+    quote_params_with_items = Map.put(quote_params, "items", items)
+
+    case Quotes.create_quote(quote_params_with_items) do
       {:ok, quote} ->
         Phoenix.PubSub.broadcast(TragarCms.PubSub, "quotes", {:quote_created, quote})
 
@@ -227,6 +300,7 @@ defmodule TragarCmsWeb.DashboardLive do
           socket
           |> assign(:show_form, false)
           |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
+          |> assign(:items, [])
           |> put_flash(:info, "Quote created successfully")
           |> load_quotes()
           |> calculate_stats()
@@ -239,7 +313,9 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Build shipment data for quick quote API call
-  defp build_shipment_data(quote_params) do
+  defp build_shipment_data(quote_params, items) do
+    first_item = List.first(items) || %{}
+
     %{
       "consignorSuburb" => Map.get(quote_params, "consignor_suburb", ""),
       "consignorCity" => Map.get(quote_params, "consignor_city", ""),
@@ -248,57 +324,92 @@ defmodule TragarCmsWeb.DashboardLive do
       "consigneeCity" => Map.get(quote_params, "consignee_city", ""),
       "consigneePostalCode" => Map.get(quote_params, "consignee_postal_code", ""),
       "serviceType" => Map.get(quote_params, "service_type", ""),
-      "totalQuantity" => parse_integer(Map.get(quote_params, "item_quantity", "1")),
-      "totalWeight" => parse_decimal(Map.get(quote_params, "item_weight", "0.1")),
-      "length" => parse_decimal(Map.get(quote_params, "item_length", "10")),
-      "width" => parse_decimal(Map.get(quote_params, "item_width", "10")),
-      "height" => parse_decimal(Map.get(quote_params, "item_height", "10"))
+      "totalQuantity" => calculate_total_quantity(items),
+      "totalWeight" => calculate_total_weight(items),
+      "length" => parse_decimal(Map.get(first_item, "length", "10")),
+      "width" => parse_decimal(Map.get(first_item, "width", "10")),
+      "height" => parse_decimal(Map.get(first_item, "height", "10"))
     }
   end
 
   # Build quote data for full quote API call
-  defp build_quote_data(quote_params) do
-    %{
-      "consignor_name" => Map.get(quote_params, "consignor_name", ""),
-      "consignor_building" => Map.get(quote_params, "consignor_building", ""),
-      "consignor_street" => Map.get(quote_params, "consignor_street", ""),
-      "consignor_suburb" => Map.get(quote_params, "consignor_suburb", ""),
-      "consignor_city" => Map.get(quote_params, "consignor_city", ""),
-      "consignor_postal_code" => Map.get(quote_params, "consignor_postal_code", ""),
-      "consignor_contact_name" => Map.get(quote_params, "consignor_contact_name", ""),
-      "consignor_contact_tel" => Map.get(quote_params, "consignor_contact_tel", ""),
-      "consignee_name" => Map.get(quote_params, "consignee_name", ""),
-      "consignee_building" => Map.get(quote_params, "consignee_building", ""),
-      "consignee_street" => Map.get(quote_params, "consignee_street", ""),
-      "consignee_suburb" => Map.get(quote_params, "consignee_suburb", ""),
-      "consignee_city" => Map.get(quote_params, "consignee_city", ""),
-      "consignee_postal_code" => Map.get(quote_params, "consignee_postal_code", ""),
-      "consignee_contact_name" => Map.get(quote_params, "consignee_contact_name", ""),
-      "consignee_contact_tel" => Map.get(quote_params, "consignee_contact_tel", ""),
-      "service_type" => Map.get(quote_params, "service_type", ""),
-      "shipper_reference" => Map.get(quote_params, "shipper_reference", ""),
-      "value_declared" => parse_decimal(Map.get(quote_params, "value_declared", "0")),
-      "collection_instructions" => Map.get(quote_params, "collection_instructions", ""),
-      "delivery_instructions" => Map.get(quote_params, "delivery_instructions", ""),
-      "total_quantity" => parse_integer(Map.get(quote_params, "item_quantity", "1")),
-      "total_weight" => parse_decimal(Map.get(quote_params, "item_weight", "0.1")),
-      "items" => [
-        %{
-          "quantity" => parse_integer(Map.get(quote_params, "item_quantity", "1")),
-          "weight" => parse_decimal(Map.get(quote_params, "item_weight", "0.1")),
-          "length" => parse_decimal(Map.get(quote_params, "item_length", "10")),
-          "width" => parse_decimal(Map.get(quote_params, "item_width", "10")),
-          "height" => parse_decimal(Map.get(quote_params, "item_height", "10")),
-          "description" => Map.get(quote_params, "item_description", "")
-        }
-      ]
-    }
+  defp build_quote_data(quote_params, items) do
+    Map.merge(quote_params, %{
+      "total_quantity" => calculate_total_quantity(items),
+      "total_weight" => calculate_total_weight(items),
+      "items" => format_items_for_api(items)
+    })
+  end
+
+  defp extract_items_from_params(params) do
+    case params["items"] do
+      nil ->
+        []
+
+      items_map when is_map(items_map) ->
+        items_map
+        |> Enum.sort_by(fn {key, _value} -> String.to_integer(key) end)
+        |> Enum.map(fn {_index, item} ->
+          %{
+            "description" => item["description"] || "",
+            "quantity" => parse_integer(item["quantity"]),
+            "weight" => parse_decimal(item["weight"]),
+            "length" => parse_decimal(item["length"]),
+            "width" => parse_decimal(item["width"]),
+            "height" => parse_decimal(item["height"]),
+            "unit_value" => parse_decimal(item["unit_value"]),
+            "package_type" => item["package_type"] || "",
+            "special_handling" => item["special_handling"] || "",
+            "special_instructions" => item["special_instructions"] || ""
+          }
+        end)
+        |> Enum.reject(fn item ->
+          item["description"] == "" || item["description"] == nil
+        end)
+
+      _ ->
+        []
+    end
+  end
+
+  defp format_items_for_api(items) do
+    items
+    |> Enum.with_index(1)
+    |> Enum.map(fn {item, index} ->
+      %{
+        "line_number" => index,
+        "quantity" => item["quantity"],
+        "description" => item["description"],
+        "weight" => item["weight"],
+        "length" => item["length"],
+        "width" => item["width"],
+        "height" => item["height"],
+        "unit_value" => item["unit_value"],
+        "package_type" => item["package_type"]
+      }
+    end)
+  end
+
+  defp calculate_total_quantity(items) do
+    items
+    |> Enum.map(fn item -> item["quantity"] || 0 end)
+    |> Enum.sum()
+  end
+
+  defp calculate_total_weight(items) do
+    items
+    |> Enum.map(fn item -> item["weight"] || Decimal.new(0) end)
+    |> Enum.reduce(Decimal.new(0), fn weight, acc ->
+      case weight do
+        %Decimal{} -> Decimal.add(acc, weight)
+        _ -> acc
+      end
+    end)
   end
 
   # Extract total amount from API response
   defp extract_total_amount_from_response(response) do
     cond do
-      # For quick quote response (esRates format)
       is_map(response) and Map.has_key?(response, "response") ->
         case Map.get(response, "response") do
           %{"esRates" => rates_data} when is_binary(rates_data) ->
@@ -339,22 +450,24 @@ defmodule TragarCmsWeb.DashboardLive do
   defp parse_integer(value) when is_binary(value) do
     case Integer.parse(value) do
       {int, _} -> int
-      :error -> 1
+      :error -> 0
     end
   end
 
   defp parse_integer(value) when is_integer(value), do: value
-  defp parse_integer(_), do: 1
+  defp parse_integer(_), do: 0
 
   defp parse_decimal(value) when is_binary(value) do
-    case Float.parse(value) do
-      {float, _} -> float
-      :error -> 0.1
+    case Decimal.parse(value) do
+      {decimal, _} -> decimal
+      :error -> Decimal.new(0)
     end
+  rescue
+    _ -> Decimal.new(0)
   end
 
-  defp parse_decimal(value) when is_number(value), do: value
-  defp parse_decimal(_), do: 0.1
+  defp parse_decimal(value) when is_number(value), do: Decimal.new(value)
+  defp parse_decimal(_), do: Decimal.new(0)
 
   defp load_quotes(socket) do
     quotes = Quotes.list_quotes()
@@ -365,12 +478,10 @@ defmodule TragarCmsWeb.DashboardLive do
     quotes = socket.assigns.quotes
 
     total_quotes = length(quotes)
-
     pending_quotes = Enum.count(quotes, fn quote -> quote.status == "pending" end)
     accepted_quotes = Enum.count(quotes, fn quote -> quote.status == "accepted" end)
     rejected_quotes = Enum.count(quotes, fn quote -> quote.status == "rejected" end)
 
-    # Calculate total value of all quotes
     total_value =
       quotes
       |> Enum.map(fn quote ->
@@ -390,7 +501,6 @@ defmodule TragarCmsWeb.DashboardLive do
       end)
       |> Enum.reduce(Decimal.new(0), &Decimal.add/2)
 
-    # Calculate average quote value
     avg_value =
       if total_quotes > 0 do
         Decimal.div(total_value, total_quotes)
@@ -398,7 +508,6 @@ defmodule TragarCmsWeb.DashboardLive do
         Decimal.new(0)
       end
 
-    # Calculate pending value (value of quotes awaiting decision)
     pending_value =
       quotes
       |> Enum.filter(fn quote -> quote.status == "pending" end)
@@ -435,7 +544,6 @@ defmodule TragarCmsWeb.DashboardLive do
         "R0.00"
 
       _formatted_value ->
-        # Convert to float for formatting, then back to string
         float_value = Decimal.to_float(decimal_value)
 
         :erlang.float_to_binary(float_value, decimals: 2)
