@@ -65,6 +65,24 @@ defmodule TragarCms.Quotes do
       {:error, %Ecto.Changeset{}}
 
   """
+  @doc """\
+  Updates a quote.\
+\
+  ## Examples\
+\
+      iex> update_quote(quote, %{field: new_value})\
+      {:ok, %Quote{}}\
+\
+      iex> update_quote(quote, %{field: bad_value})\
+      {:error, %Ecto.Changeset{}}\
+\
+  """\
+  def update_quote(%Quote{} = quote, attrs) do\
+    quote\
+    |> Quote.changeset(attrs)\
+    |> Repo.update()\
+  end\
+
   def delete_quote(%Quote{} = quote) do
     Repo.delete(quote)
   end
