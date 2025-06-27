@@ -21,6 +21,12 @@ defmodule TragarCms.TragarApi do
   Returns {:ok, token} or {:error, reason}.
   """
   def authenticate do
+    # Use sample data in development/demo mode
+    if use_sample_data?() do
+      Logger.info("Using sample authentication for development")
+      return({:ok, "sample_auth_token_12345"})
+    end
+
     body = %{
       username: @api_username,
       password: @api_password,
@@ -661,6 +667,11 @@ defmodule TragarCms.TragarApi do
     else
       0
     end
+  end
+
+  # Development mode helper\
+  defp use_sample_data?() do
+    System.get_env("USE_SAMPLE_DATA", "true") == "true" or @api_username == "demo_user"
   end
 
   defp generate_sample_quotes(limit) do
