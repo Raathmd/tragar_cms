@@ -7,8 +7,11 @@ defmodule TragarCms.TragarApi do
 
   require Logger
 
-  # FreightWare API base URL - updated with your provided endpoint
-  @base_url "http://tragar-db.dovetail.co.za:5001/WebServices/web"
+  # FreightWare API base URL - configurable via environment variable
+  @base_url System.get_env(
+              "TRAGAR_API_BASE_URL",
+              "http://tragar-db.dovetail.co.za:5001/WebServices/web"
+            )
 
   # Single API credentials from environment variables
   @api_username System.get_env("TRAGAR_API_USERNAME", "demo_user")
