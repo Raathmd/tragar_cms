@@ -1,17 +1,8 @@
-# Find eligible builder and runner images on Docker Hub. We use Ubuntu/Debian
-# instead of Alpine to avoid DNS resolution issues in production.
-#
-# https://hub.docker.com/r/hexpm/elixir/tags?page=1&name=ubuntu
-# https://hub.docker.com/_/ubuntu?tab=tags
-#
-# This file is based on these images:
-#
-#   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
-#   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bullseye-20210902-slim - for the runtime
-#
-ARG ELIXIR_VERSION=1.15.4
-ARG OTP_VERSION=26.0.2
-ARG DEBIAN_VERSION=bullseye-20230612-slim
+# Find eligible builder and runner images on Docker Hub, or
+# Azure Container Registry, etc.
+ARG ELIXIR_VERSION=1.15.7
+ARG OTP_VERSION=26.1.2
+ARG DEBIAN_VERSION=bullseye-20231009-slim
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
@@ -86,5 +77,13 @@ COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/tragar_cms ./
 
 USER nobody
 
-CMD ["/app/bin/server"]
+# Create directory for SQLite database
+RUN mkdir -p /app/data
 
+# Set the volume for persistent data
+VOLUME ["/app/data"]
+
+# If using a startup script, make sure it's executable
+RUN chmod +x /app/bin/tragar_cms
+
+CMD ["/app/bin/tragar_cms", "start"]
