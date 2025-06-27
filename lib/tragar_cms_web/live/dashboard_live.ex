@@ -208,7 +208,7 @@ defmodule TragarCmsWeb.DashboardLive do
       "0" ->
         "R0.00"
 
-      value ->
+      formatted_value ->
         # Convert to float for formatting, then back to string
         float_value = Decimal.to_float(decimal_value)
 
