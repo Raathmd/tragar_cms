@@ -91,7 +91,7 @@ defmodule TragarCmsWeb.DashboardLive do
 
   @impl true
   def handle_event("save", %{"quote" => quote_params} = params, socket) do
-    # Get the selected account reference for API credentials
+    # Get the selected account reference for filtering (not for API credentials)
     account_reference_id =
       Map.get(quote_params, "account_reference_id", socket.assigns.selected_account_reference_id)
 
@@ -197,10 +197,10 @@ defmodule TragarCmsWeb.DashboardLive do
     items = extract_items_from_params(params)
     shipment_data = build_shipment_data(quote_params, items)
 
-    # Use account reference credentials for API call
-    api_opts = build_api_opts(account_reference)
+    # Use account reference code for API filtering (not credentials)
+    account_reference_code = account_reference && account_reference.reference_code
 
-    case TragarApi.quick_quote(shipment_data, api_opts) do
+    case TragarApi.quick_quote(shipment_data, account_reference_code) do
       {:ok, response} ->
         content = build_content_from_params(quote_params, items)
 
@@ -247,10 +247,10 @@ defmodule TragarCmsWeb.DashboardLive do
     items = extract_items_from_params(params)
     quote_data = build_quote_data(quote_params, items)
 
-    # Use account reference credentials for API call
-    api_opts = build_api_opts(account_reference)
+    # Use account reference code for API filtering (not credentials)
+    account_reference_code = account_reference && account_reference.reference_code
 
-    case TragarApi.create_quote(quote_data, api_opts) do
+    case TragarApi.create_quote(quote_data, account_reference_code) do
       {:ok, response} ->
         content = build_content_from_params(quote_params, items)
 
@@ -322,17 +322,6 @@ defmodule TragarCmsWeb.DashboardLive do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
     end
-  end
-
-  # Build API options from account reference credentials
-  defp build_api_opts(nil), do: []
-
-  defp build_api_opts(account_reference) do
-    [
-      username: account_reference.api_username,
-      password: account_reference.api_password,
-      station: account_reference.api_station
-    ]
   end
 
   # Build content description from quote parameters and items
