@@ -67,6 +67,11 @@ defmodule TragarCms.Quotes.Quote do
     field :vehicle_category, :string
     field :api_response, :string
 
+    # Relationships
+    belongs_to :organization, TragarCms.Accounts.Organization
+    belongs_to :branch, TragarCms.Accounts.Branch
+    belongs_to :created_by_user, TragarCms.Accounts.User
+
     # Embedded items
     embeds_many :items, Item do
       field :line_number, :integer
@@ -79,6 +84,10 @@ defmodule TragarCms.Quotes.Quote do
       field :height, :decimal
       field :volumetric_weight, :decimal
       field :rate_type, :string
+      field :unit_value, :decimal
+      field :package_type, :string
+      field :special_handling, :string
+      field :special_instructions, :string
     end
 
     timestamps(type: :utc_datetime)
@@ -140,7 +149,10 @@ defmodule TragarCms.Quotes.Quote do
       :cash_account_type,
       :paying_party,
       :vehicle_category,
-      :api_response
+      :api_response,
+      :organization_id,
+      :branch_id,
+      :created_by_user_id
     ])
     |> cast_embed(:items, with: &item_changeset/2)
     |> validate_required([:content, :status])
@@ -159,7 +171,11 @@ defmodule TragarCms.Quotes.Quote do
       :width,
       :height,
       :volumetric_weight,
-      :rate_type
+      :rate_type,
+      :unit_value,
+      :package_type,
+      :special_handling,
+      :special_instructions
     ])
     |> validate_required([:quantity, :weight])
     |> validate_number(:quantity, greater_than: 0)
