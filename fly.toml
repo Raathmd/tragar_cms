@@ -32,7 +32,6 @@ kill_signal = 'SIGTERM'
   PHX_HOST = 'tragar-cms-1751043123.fly.dev'
   PORT = '4000'
   DATABASE_PATH = '/data/tragar_cms.db'
-  SECRET_KEY_BASE = 'your-secret-key-base-here'
 
 [mounts]
   source = 'tragar_cms_data'
