@@ -2,8 +2,11 @@ import Config
 
 # Configure your database
 config :tragar_cms, TragarCms.Repo,
-  database: Path.expand("../tragar_cms_dev.db", __DIR__),
-  pool_size: 5,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "tragar_cms_dev",
+  pool_size: 10,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 
