@@ -5,7 +5,6 @@ defmodule TragarCms.Repo.Migrations.AddMissingQuoteFields do
     alter table(:quotes) do
       # Quote metadata fields
       add :quote_type, :string
-      add :quote_number, :string
       add :quote_obj, :string
       add :quote_date, :string
       add :account_reference, :string
@@ -60,6 +59,9 @@ defmodule TragarCms.Repo.Migrations.AddMissingQuoteFields do
       add :vehicle_category, :string
       add :api_response, :string
 
+      # Add back total_amount that was removed
+      add :total_amount, :decimal
+
       # Relationships
       add :organization_id, references(:organizations, type: :binary_id, on_delete: :delete_all)
       add :branch_id, references(:branches, type: :binary_id, on_delete: :nilify_all)
@@ -72,7 +74,6 @@ defmodule TragarCms.Repo.Migrations.AddMissingQuoteFields do
     create index(:quotes, [:organization_id])
     create index(:quotes, [:branch_id])
     create index(:quotes, [:created_by_user_id])
-    create index(:quotes, [:quote_number])
     create index(:quotes, [:quote_obj])
     create index(:quotes, [:status])
     create index(:quotes, [:quote_type])
