@@ -7,9 +7,6 @@ defmodule TragarCms.Repo.Migrations.CreateAccountReferences do
       add :reference_code, :string, null: false
       add :reference_name, :string, null: false
       add :description, :string
-      add :api_username, :string
-      add :api_password, :string
-      add :api_station, :string
       add :status, :string, default: "active", null: false
       add :is_default, :boolean, default: false
 
