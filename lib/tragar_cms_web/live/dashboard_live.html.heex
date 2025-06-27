@@ -201,209 +201,6 @@
                 type="text"
                 id="consignor_name"
                 class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                error_class="border-<Layouts.app flash={@flash}>
-  <div class="mx-auto max-w-7xl p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">Quotes Dashboard</h1>
-    
-<!-- Dashboard Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- Total Quotes Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Quotes</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">{@total_quotes}</p>
-          </div>
-          <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-            <svg
-              class="w-6 h-6 text-blue-600 dark:text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-      
-<!-- Total Value Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-              {format_currency(@total_value)}
-            </p>
-          </div>
-          <div class="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-            <svg
-              class="w-6 h-6 text-green-600 dark:text-green-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-      
-<!-- Average Value Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Average Value</p>
-            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {format_currency(@avg_value)}
-            </p>
-          </div>
-          <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
-            <svg
-              class="w-6 h-6 text-purple-600 dark:text-purple-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-      
-<!-- Pending Value Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Value</p>
-            <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              {format_currency(@pending_value)}
-            </p>
-          </div>
-          <div class="p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
-            <svg
-              class="w-6 h-6 text-orange-600 dark:text-orange-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex justify-between items-center mb-6">
-      <button
-        phx-click="toggle_form"
-        type="button"
-        class="rounded-md bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        aria-pressed={@show_form}
-      >
-        <%= if @show_form do %>
-          Cancel
-        <% else %>
-          New Quote
-        <% end %>
-      </button>
-
-      <div class="text-gray-800 dark:text-gray-200 space-x-4 text-sm font-medium">
-        <span>Total: {@total_quotes}</span>
-        <span>Pending: {@pending_quotes}</span>
-        <span>Accepted: {@accepted_quotes}</span>
-        <span>Rejected: {@rejected_quotes}</span>
-      </div>
-    </div>
-
-    <%= if @show_form do %>
-      <.form
-        for={@form}
-        id="quote-form"
-        phx-change="validate"
-        phx-submit="save"
-        class="mb-8 bg-white dark:bg-gray-800 shadow rounded-md p-6 space-y-6"
-      >
-        <!-- Quote Type Selection -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              for="quote_type"
-              class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
-            >
-              Quote Type
-            </label>
-            <select
-              name="quote[quote_type]"
-              id="quote_type"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              phx-change="validate"
-            >
-              <option value="quote" selected={@form[:quote_type].value == "quote"}>
-                Full Quote
-              </option>
-              <option value="quick_quote" selected={@form[:quote_type].value == "quick_quote"}>
-                Quick Quote
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              for="service_type"
-              class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
-            >
-              Service Type (Optional)
-            </label>
-            <.input
-              field={@form[:service_type]}
-              type="text"
-              id="service_type"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
-              placeholder="Service type code"
-            />
-          </div>
-        </div>
-        
-<!-- Consignor (Sender) Details -->
-        <div class="border-t pt-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Consignor (Sender) Details
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                for="consignor_name"
-                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
-              >
-                Company Name *
-              </label>
-              <.input
-                field={@form[:consignor_name]}
-                type="text"
-                id="consignor_name"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
                 placeholder="Company name"
               />
@@ -798,11 +595,19 @@
                       >
                         <option value="" selected={item["package_type"] == ""}>Select</option>
                         <option value="box" selected={item["package_type"] == "box"}>Box</option>
-                        <option value="pallet" selected={item["package_type"] == "pallet"}>Pallet</option>
+                        <option value="pallet" selected={item["package_type"] == "pallet"}>
+                          Pallet
+                        </option>
                         <option value="bag" selected={item["package_type"] == "bag"}>Bag</option>
-                        <option value="envelope" selected={item["package_type"] == "envelope"}>Envelope</option>
-                        <option value="tube" selected={item["package_type"] == "tube"}>Tube</option>
-                        <option value="other" selected={item["package_type"] == "other"}>Other</option>
+                        <option value="envelope" selected={item["package_type"] == "envelope"}>
+                          Envelope
+                        </option>
+                        <option value="tube" selected={item["package_type"] == "tube"}>
+                          Tube
+                        </option>
+                        <option value="other" selected={item["package_type"] == "other"}>
+                          Other
+                        </option>
                       </select>
                     </td>
                     <td class="px-3 py-2 text-center">
@@ -818,10 +623,13 @@
                     </td>
                   </tr>
                 <% end %>
-                
+
                 <%= if @items == [] do %>
                   <tr>
-                    <td colspan="7" class="px-3 py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    <td
+                      colspan="7"
+                      class="px-3 py-4 text-center text-gray-500 dark:text-gray-400 text-sm"
+                    >
                       No items added. Click "Add Item" to add shipment items.
                     </td>
                   </tr>
@@ -955,13 +763,13 @@
           <%= for quote <- @quotes do %>
             <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <td class="px-4 py-2 text-gray-900 dark:text-gray-100 font-mono text-sm">
-                <%= quote.quote_number || "Q#{String.slice(quote.id, 0, 8)}" %>
+                {quote.quote_number || "Q#{String.slice(quote.id, 0, 8)}"}
               </td>
               <td class="px-4 py-2 text-gray-900 dark:text-gray-100 max-w-xs">
                 <div class="text-sm">
-                  <div class="font-medium"><%= quote.consignor_name || quote.author %></div>
+                  <div class="font-medium">{quote.consignor_name || quote.author}</div>
                   <div class="text-gray-500 dark:text-gray-400">↓</div>
-                  <div class="font-medium"><%= quote.consignee_name || "Recipient" %></div>
+                  <div class="font-medium">{quote.consignee_name || "Recipient"}</div>
                 </div>
               </td>
               <td class="px-4 py-2 text-gray-900 dark:text-gray-100 capitalize">
@@ -1014,4 +822,3 @@
     </div>
   </div>
 </Layouts.app>
-
