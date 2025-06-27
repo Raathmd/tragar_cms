@@ -17,6 +17,7 @@ defmodule TragarCms.Accounts.User do
 
     belongs_to :organization, TragarCms.Accounts.Organization
     belongs_to :branch, TragarCms.Accounts.Branch
+    belongs_to :default_account_reference, TragarCms.Accounts.AccountReference
     has_many :quotes, TragarCms.Quotes.Quote, foreign_key: :created_by_user_id
 
     timestamps(type: :utc_datetime)
@@ -36,7 +37,8 @@ defmodule TragarCms.Accounts.User do
       :last_login_at,
       :password_hash,
       :organization_id,
-      :branch_id
+      :branch_id,
+      :default_account_reference_id
     ])
     |> validate_required([:email, :first_name, :last_name, :organization_id])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
@@ -61,7 +63,7 @@ defmodule TragarCms.Accounts.User do
   defp put_password_hash(
          %Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset
        ) do
-    change(changeset, Argon2.add_hash(password))
+    change(changeset, password_hash: Base.encode64(:crypto.hash(:sha256, password)))
   end
 
   defp put_password_hash(changeset), do: changeset
