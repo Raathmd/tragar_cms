@@ -7,9 +7,6 @@ defmodule TragarCms.Application do
 
   @impl true
   def start(_type, _args) do
-    # Ensure database directory exists before starting
-    ensure_database_directory()
-
     children = [
       TragarCmsWeb.Telemetry,
       TragarCms.Repo,
@@ -40,26 +37,7 @@ defmodule TragarCms.Application do
   end
 
   defp skip_migrations?() do
-    # By default, sqlite migrations are run when using a release
+    # By default, migrations are run when using a release for PostgreSQL
     System.get_env("RELEASE_NAME") == nil
-  end
-
-  defp ensure_database_directory() do
-    # Get the database path from configuration
-    database_path = Application.get_env(:tragar_cms, TragarCms.Repo)[:database]
-
-    if database_path do
-      # Extract directory from database file path
-      database_dir = Path.dirname(database_path)
-
-      # Create directory if it doesn't exist
-      case File.mkdir_p(database_dir) do
-        :ok ->
-          IO.puts("Database directory ensured: #{database_dir}")
-
-        {:error, reason} ->
-          IO.puts("Warning: Could not create database directory #{database_dir}: #{reason}")
-      end
-    end
   end
 end
