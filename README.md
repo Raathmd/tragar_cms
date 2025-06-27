@@ -1,18 +1,19 @@
-# TragarCms
+# Tragar CMS
 
-To start your Phoenix server:
+A professional freight management system with FreightWare API integration.
 
-* Run `mix setup` to install and setup dependencies
-* Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+## Features
+- Real-time quote management
+- FreightWare V1/V2 API integration
+- Professional business dashboard
+- Background sync worker
+- SQLite database with comprehensive schema
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Setup
+1. Copy .env.example to .env and configure FreightWare credentials
+2. Run `mix deps.get`
+3. Run `mix ecto.setup`
+4. Start server with `mix phx.server`
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+Visit http://localhost:4000 to access the dashboard.
 
-## Learn more
-
-* Official website: https://www.phoenixframework.org/
-* Guides: https://hexdocs.pm/phoenix/overview.html
-* Docs: https://hexdocs.pm/phoenix
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
