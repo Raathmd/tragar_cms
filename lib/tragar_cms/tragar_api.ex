@@ -188,7 +188,7 @@ defmodule TragarCms.TragarApi do
         quotes = parse_freightware_quotes(response_body, opts)
         {:ok, quotes}
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quotes request failed with status: #{status}")
         Logger.error("Response body: #{inspect(response_body)}")
         {:error, "Failed to fetch quotes: HTTP #{status}"}
@@ -213,7 +213,7 @@ defmodule TragarCms.TragarApi do
         quote = parse_single_quote(response_body)
         {:ok, quote}
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare get quote request failed with status: #{status}")
         Logger.error("Response body: #{inspect(response_body)}")
         {:error, "Failed to get quote: HTTP #{status}"}
@@ -240,7 +240,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully created quote in FreightWare")
         {:ok, response}
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote creation failed with status: #{status}")
         Logger.error("Response body: #{inspect(response_body)}")
         {:error, "Failed to create quote: HTTP #{status}"}
@@ -268,7 +268,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully updated quote #{quote_identifier}")
         {:ok, response}
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote update failed with status: #{status}")
         Logger.error("Response body: #{inspect(response_body)}")
         {:error, "Failed to update quote: HTTP #{status}"}
@@ -295,7 +295,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully retrieved quick quote")
         {:ok, response}
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quick quote failed with status: #{status}")
         Logger.error("Response body: #{inspect(response_body)}")
         {:error, "Failed to get quick quote: HTTP #{status}"}
@@ -329,7 +329,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully accepted quote #{quote_obj}")
         {:ok, :accepted}
 
-      {:ok, %{status: status, body: response_body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote acceptance failed with status: #{status}")
         {:error, "Failed to accept quote: HTTP #{status}"}
 
