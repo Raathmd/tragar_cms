@@ -14,7 +14,6 @@ defmodule TragarCms.Quotes.Quote do
     field :quote_number, :string
     field :quote_obj, :decimal
     field :quote_date, :date
-    field :account_reference, :string
     field :shipper_reference, :string
     field :service_type, :string
     field :service_type_description, :string
