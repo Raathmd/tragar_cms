@@ -1,0 +1,47 @@
+app = 'tragar-cms-1751043123'
+primary_region = 'iad'
+kill_signal = 'SIGTERM'
+
+[experimental]
+  auto_rollback = true
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 4000
+  processes = ['app']
+
+  [[services.ports]]
+    port = 80
+    handlers = ['http']
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ['tls', 'http']
+
+  [services.concurrency]
+    type = 'connections'
+    hard_limit = 1000
+    soft_limit = 1000
+
+[[statics]]
+  guest_path = '/app/lib/tragar_cms_web/static'
+  url_prefix = '/static'
+
+[env]
+  PHX_HOST = 'tragar-cms-1751043123.fly.dev'
+  PORT = '4000'
+  DATABASE_PATH = '/data/tragar_cms.db'
+  SECRET_KEY_BASE = 'your-secret-key-base-here'
+
+[mounts]
+  source = 'tragar_cms_data'
+  destination = '/data'
+
+[deploy]
+  release_command = 'mix ecto.migrate'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
