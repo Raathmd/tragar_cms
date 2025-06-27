@@ -65,7 +65,7 @@ defmodule TragarCms.Quotes.Quote do
     field :vehicle_category, :string
 
     # Relationships
-    belongs_to :account_reference, TragarCms.Accounts.AccountReference
+    belongs_to :account_reference_id, TragarCms.Accounts.AccountReference
 
     timestamps(type: :utc_datetime)
   end
@@ -81,7 +81,7 @@ defmodule TragarCms.Quotes.Quote do
       :quote_number,
       :quote_obj,
       :quote_date,
-      :account_reference,
+      :account_reference_id,
       :shipper_reference,
       :service_type,
       :service_type_description,
