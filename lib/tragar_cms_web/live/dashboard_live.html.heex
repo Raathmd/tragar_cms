@@ -141,80 +141,544 @@
         phx-submit="save"
         class="mb-8 bg-white dark:bg-gray-800 shadow rounded-md p-6 space-y-6"
       >
-        <div>
-          <label for="author" class="block mb-1 font-semibold text-gray-700 dark:text-gray-300">
-            Author
-          </label>
-          <.input
-            field={@form[:author]}
-            type="text"
-            id="author"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
-            placeholder="Enter author name"
-          />
+        <!-- Quote Type Selection -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label
+              for="quote_type"
+              class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Quote Type
+            </label>
+            <select
+              name="quote[quote_type]"
+              id="quote_type"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              phx-change="validate"
+            >
+              <option value="quote" selected={@form[:quote_type].value == "quote"}>
+                Full Quote
+              </option>
+              <option value="quick_quote" selected={@form[:quote_type].value == "quick_quote"}>
+                Quick Quote
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="service_type"
+              class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+            >
+              Service Type (Optional)
+            </label>
+            <.input
+              field={@form[:service_type]}
+              type="text"
+              id="service_type"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+              placeholder="Service type code"
+            />
+          </div>
+        </div>
+        
+<!-- Consignor (Sender) Details -->
+        <div class="border-t pt-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Consignor (Sender) Details
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                for="consignor_name"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Company Name *
+              </label>
+              <.input
+                field={@form[:consignor_name]}
+                type="text"
+                id="consignor_name"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Company name"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_contact_name"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Contact Name *
+              </label>
+              <.input
+                field={@form[:consignor_contact_name]}
+                type="text"
+                id="consignor_contact_name"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Contact person"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_contact_tel"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Contact Tel *
+              </label>
+              <.input
+                field={@form[:consignor_contact_tel]}
+                type="text"
+                id="consignor_contact_tel"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Phone number"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_building"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Building/Unit *
+              </label>
+              <.input
+                field={@form[:consignor_building]}
+                type="text"
+                id="consignor_building"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Building or unit"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_street"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Street Address *
+              </label>
+              <.input
+                field={@form[:consignor_street]}
+                type="text"
+                id="consignor_street"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Street address"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_suburb"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Suburb *
+              </label>
+              <.input
+                field={@form[:consignor_suburb]}
+                type="text"
+                id="consignor_suburb"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Suburb"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_city"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                City *
+              </label>
+              <.input
+                field={@form[:consignor_city]}
+                type="text"
+                id="consignor_city"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="City"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignor_postal_code"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Postal Code *
+              </label>
+              <.input
+                field={@form[:consignor_postal_code]}
+                type="text"
+                id="consignor_postal_code"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Postal code"
+              />
+            </div>
+          </div>
+        </div>
+        
+<!-- Consignee (Receiver) Details -->
+        <div class="border-t pt-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Consignee (Receiver) Details
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                for="consignee_name"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Company Name *
+              </label>
+              <.input
+                field={@form[:consignee_name]}
+                type="text"
+                id="consignee_name"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Company name"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_contact_name"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Contact Name *
+              </label>
+              <.input
+                field={@form[:consignee_contact_name]}
+                type="text"
+                id="consignee_contact_name"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Contact person"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_contact_tel"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Contact Tel *
+              </label>
+              <.input
+                field={@form[:consignee_contact_tel]}
+                type="text"
+                id="consignee_contact_tel"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Phone number"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_building"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Building/Unit *
+              </label>
+              <.input
+                field={@form[:consignee_building]}
+                type="text"
+                id="consignee_building"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Building or unit"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_street"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Street Address *
+              </label>
+              <.input
+                field={@form[:consignee_street]}
+                type="text"
+                id="consignee_street"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Street address"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_suburb"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Suburb *
+              </label>
+              <.input
+                field={@form[:consignee_suburb]}
+                type="text"
+                id="consignee_suburb"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Suburb"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_city"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                City *
+              </label>
+              <.input
+                field={@form[:consignee_city]}
+                type="text"
+                id="consignee_city"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="City"
+              />
+            </div>
+
+            <div>
+              <label
+                for="consignee_postal_code"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Postal Code *
+              </label>
+              <.input
+                field={@form[:consignee_postal_code]}
+                type="text"
+                id="consignee_postal_code"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Postal code"
+              />
+            </div>
+          </div>
+        </div>
+        
+<!-- Shipment Items -->
+        <div class="border-t pt-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Shipment Items
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label
+                for="item_quantity"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Quantity *
+              </label>
+              <.input
+                field={@form[:item_quantity]}
+                type="number"
+                id="item_quantity"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="1"
+              />
+            </div>
+
+            <div>
+              <label
+                for="item_weight"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Weight (kg) *
+              </label>
+              <.input
+                field={@form[:item_weight]}
+                type="number"
+                step="0.1"
+                id="item_weight"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="0.1"
+              />
+            </div>
+
+            <div>
+              <label
+                for="item_length"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Length (cm) *
+              </label>
+              <.input
+                field={@form[:item_length]}
+                type="number"
+                step="0.1"
+                id="item_length"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="10"
+              />
+            </div>
+
+            <div>
+              <label
+                for="item_width"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Width (cm) *
+              </label>
+              <.input
+                field={@form[:item_width]}
+                type="number"
+                step="0.1"
+                id="item_width"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="10"
+              />
+            </div>
+
+            <div>
+              <label
+                for="item_height"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Height (cm) *
+              </label>
+              <.input
+                field={@form[:item_height]}
+                type="number"
+                step="0.1"
+                id="item_height"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="10"
+              />
+            </div>
+
+            <div>
+              <label
+                for="item_description"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Description
+              </label>
+              <.input
+                field={@form[:item_description]}
+                type="text"
+                id="item_description"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Item description"
+              />
+            </div>
+          </div>
+        </div>
+        
+<!-- Additional Information (Full Quote Only) -->
+        <div
+          class="border-t pt-6"
+          style={if @form[:quote_type].value == "quick_quote", do: "display: none;"}
+        >
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Additional Information
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                for="shipper_reference"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Shipper Reference
+              </label>
+              <.input
+                field={@form[:shipper_reference]}
+                type="text"
+                id="shipper_reference"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="Your reference"
+              />
+            </div>
+
+            <div>
+              <label
+                for="value_declared"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Declared Value
+              </label>
+              <.input
+                field={@form[:value_declared]}
+                type="number"
+                step="0.01"
+                id="value_declared"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <label
+                for="collection_instructions"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Collection Instructions
+              </label>
+              <textarea
+                name="quote[collection_instructions]"
+                id="collection_instructions"
+                rows="3"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                placeholder="Special collection instructions"
+              ><%= @form[:collection_instructions].value %></textarea>
+            </div>
+
+            <div class="md:col-span-2">
+              <label
+                for="delivery_instructions"
+                class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
+              >
+                Delivery Instructions
+              </label>
+              <textarea
+                name="quote[delivery_instructions]"
+                id="delivery_instructions"
+                rows="3"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                placeholder="Special delivery instructions"
+              ><%= @form[:delivery_instructions].value %></textarea>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label for="content" class="block mb-1 font-semibold text-gray-700 dark:text-gray-300">
-            Content
-          </label>
-          <textarea
-            name="quote[content]"
-            id="content"
-            rows="4"
-            phx-hook="autosize"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            placeholder="Enter quote content"
-          ><%= @form[:content].value %></textarea>
-          <%= if input_error = Enum.find(@form.errors || [], fn {k, _v} -> k == :content end) do %>
-            <p class="text-sm mt-1 text-red-600">{elem(input_error, 1)}</p>
-          <% end %>
-        </div>
-
-        <div>
-          <label for="status" class="block mb-1 font-semibold text-gray-700 dark:text-gray-300">
-            Status
-          </label>
-          <select
-            name="quote[status]"
-            id="status"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            phx-change="validate"
-          >
-            <option value="pending" selected={@form[:status].value == "pending"}>Pending</option>
-            <option value="accepted" selected={@form[:status].value == "accepted"}>
-              Accepted
-            </option>
-            <option value="rejected" selected={@form[:status].value == "rejected"}>
-              Rejected
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label
-            for="total_amount"
-            class="block mb-1 font-semibold text-gray-700 dark:text-gray-300"
-          >
-            Total Amount
-          </label>
-          <.input
-            field={@form[:total_amount]}
-            type="text"
-            id="total_amount"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 py-2 font-normal text-gray-900 placeholder:text-gray-400 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            error_class="border-red-500 focus:border-red-600 focus:ring-red-500"
-            placeholder="Enter total amount"
-          />
-        </div>
-
-        <div class="flex justify-end">
+        <div class="flex justify-end space-x-4">
           <button
             type="submit"
+            name="action"
+            value="quick_quote"
+            class="rounded-md bg-orange-600 text-white px-6 py-2 font-semibold hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+          >
+            Get Quick Quote
+          </button>
+          <button
+            type="submit"
+            name="action"
+            value="full_quote"
             class="rounded-md bg-green-600 text-white px-6 py-2 font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            Save Quote
+            Create Full Quote
           </button>
         </div>
       </.form>
