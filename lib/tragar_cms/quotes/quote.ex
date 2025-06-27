@@ -65,6 +65,9 @@ defmodule TragarCms.Quotes.Quote do
     field :paying_party, :string
     field :vehicle_category, :string
 
+    # Relationships
+    belongs_to :account_reference, TragarCms.Accounts.AccountReference
+
     timestamps(type: :utc_datetime)
   end
 
@@ -122,7 +125,8 @@ defmodule TragarCms.Quotes.Quote do
       :charged_amount,
       :cash_account_type,
       :paying_party,
-      :vehicle_category
+      :vehicle_category,
+      :account_reference_id
     ])
     |> validate_required([:content, :status])
     |> validate_inclusion(:status, ["pending", "accepted", "rejected"])
