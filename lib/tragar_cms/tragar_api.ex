@@ -177,32 +177,11 @@ defmodule TragarCms.TragarApi do
 
   # Private functions
 
-  defp fetch_quotes_with_token(token, account_reference_code) do
-    headers = [{"X-FreightWare", token}]
-
-    # Build query filters including account reference if provided
-    filters = build_quote_filters(account_reference_code)
-    query_params = if filters != %{}, do: [filters: Jason.encode!(filters)], else: []
-
-    # Use the real FreightWare V1 quotes endpoint
-    case Req.get("#{@base_url}/FreightWare/V1/quotes/",
-           headers: headers,
-           params: query_params,
-           receive_timeout: 30_000,
-           connect_options: [timeout: 30_000]
-         ) do
-      {:ok, %{status: 200, body: response_body}} when is_map(response_body) ->
-        Logger.info("Successfully fetched quotes from FreightWare")
-        quotes = parse_freightware_quotes(response_body, account_reference_code)
-        {:ok, quotes}
-
-      {:ok, %{status: status, body: _response_body}} ->
-        Logger.error("FreightWare quotes request failed with status: #{status}")
-        {:error, "Failed to fetch quotes: HTTP #{status}"}
-
-      {:error, reason} ->
-        Logger.error("Failed to fetch quotes from FreightWare: #{inspect(reason)}")
-        {:error, "Request failed: #{inspect(reason)}"}
+    # Use sample data in development/demo mode
+    if use_sample_data?() do
+      Logger.info("Using sample quotes for development")
+      quotes = generate_sample_quotes(10)
+      return {:ok, quotes}
     end
   end
 
