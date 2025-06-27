@@ -4,6 +4,7 @@ defmodule TragarCmsWeb.DashboardLive do
   alias TragarCms.Quotes
   alias TragarCms.Quotes.Quote
   alias TragarCms.TragarApi
+  alias TragarCms.Accounts
 
   @impl true
   def mount(_params, _session, socket) do
@@ -11,11 +12,22 @@ defmodule TragarCmsWeb.DashboardLive do
       Phoenix.PubSub.subscribe(TragarCms.PubSub, "quotes")
     end
 
+    # For now, we'll use a hardcoded organization ID until authentication is added
+    organization_id = "demo-org-123"
+    account_references = Accounts.list_account_references_for_organization(organization_id)
+    default_account_reference = Accounts.get_default_account_reference(organization_id)
+
     socket =
       socket
       |> assign(:show_form, false)
       |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
       |> assign(:items, [])
+      |> assign(:organization_id, organization_id)
+      |> assign(:account_references, account_references)
+      |> assign(
+        :selected_account_reference_id,
+        if(default_account_reference, do: default_account_reference.id, else: nil)
+      )
       |> load_quotes()
       |> calculate_stats()
 
@@ -61,6 +73,10 @@ defmodule TragarCmsWeb.DashboardLive do
     # Extract items from params if present
     items = extract_items_from_params(params)
 
+    # Update selected account reference if changed
+    selected_account_reference_id =
+      Map.get(quote_params, "account_reference_id", socket.assigns.selected_account_reference_id)
+
     changeset =
       %Quote{}
       |> Quotes.change_quote(quote_params)
@@ -69,56 +85,32 @@ defmodule TragarCmsWeb.DashboardLive do
     {:noreply,
      socket
      |> assign(:form, to_form(changeset))
-     |> assign(:items, items)}
+     |> assign(:items, items)
+     |> assign(:selected_account_reference_id, selected_account_reference_id)}
   end
 
   @impl true
   def handle_event("save", %{"quote" => quote_params} = params, socket) do
-    # Extract and process items for local storage
-    items = extract_items_from_params(params)
+    # Get the selected account reference for API credentials
+    account_reference_id =
+      Map.get(quote_params, "account_reference_id", socket.assigns.selected_account_reference_id)
 
-    # Build content description from the form data
-    content = build_content_from_params(quote_params, items)
+    account_reference =
+      if account_reference_id do
+        Accounts.get_account_reference!(account_reference_id)
+      else
+        nil
+      end
 
-    # Prepare quote attributes with content description
-    quote_attrs =
-      Map.merge(quote_params, %{
-        "content" => content,
-        "author" => quote_params["consignor_name"] || "Unknown",
-        "status" => "pending"
-      })
-
-    case Quotes.create_quote(quote_attrs) do
-      {:ok, quote} ->
-        Phoenix.PubSub.broadcast(TragarCms.PubSub, "quotes", {:quote_created, quote})
-
-        socket =
-          socket
-          |> assign(:form, to_form(Quotes.change_quote(%Quote{})))
-          |> assign(:show_form, false)
-          |> assign(:items, [])
-          |> put_flash(:info, "Quote created successfully!")
-          |> load_quotes()
-          |> calculate_stats()
-
-        {:noreply, socket}
-
-      {:error, changeset} ->
-        {:noreply, assign(socket, :form, to_form(changeset))}
-    end
-  end
-
-  @impl true
-  def handle_event("save", %{"quote" => quote_params, "action" => action} = params, socket) do
-    case action do
+    case Map.get(params, "action") do
       "quick_quote" ->
-        handle_quick_quote(quote_params, params, socket)
+        handle_quick_quote(quote_params, params, socket, account_reference)
 
       "full_quote" ->
-        handle_full_quote(quote_params, params, socket)
+        handle_full_quote(quote_params, params, socket, account_reference)
 
-      _other ->
-        handle_regular_quote(quote_params, params, socket)
+      _ ->
+        handle_regular_quote(quote_params, params, socket, account_reference)
     end
   end
 
@@ -201,13 +193,15 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Handle quick quote request to FreightWare API
-  defp handle_quick_quote(quote_params, params, socket) do
+  defp handle_quick_quote(quote_params, params, socket, account_reference) do
     items = extract_items_from_params(params)
     shipment_data = build_shipment_data(quote_params, items)
 
-    case TragarApi.quick_quote(shipment_data) do
+    # Use account reference credentials for API call
+    api_opts = build_api_opts(account_reference)
+
+    case TragarApi.quick_quote(shipment_data, api_opts) do
       {:ok, response} ->
-        # Save the quick quote response to local database
         content = build_content_from_params(quote_params, items)
 
         quick_quote_attrs = %{
@@ -216,7 +210,8 @@ defmodule TragarCmsWeb.DashboardLive do
           "status" => "pending",
           "total_amount" => extract_total_amount_from_response(response),
           "consignor_name" => Map.get(quote_params, "consignor_name"),
-          "consignee_name" => Map.get(quote_params, "consignee_name")
+          "consignee_name" => Map.get(quote_params, "consignee_name"),
+          "account_reference_id" => account_reference && account_reference.id
         }
 
         case Quotes.create_quote(quick_quote_attrs) do
@@ -248,13 +243,15 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Handle full quote creation to FreightWare API
-  defp handle_full_quote(quote_params, params, socket) do
+  defp handle_full_quote(quote_params, params, socket, account_reference) do
     items = extract_items_from_params(params)
     quote_data = build_quote_data(quote_params, items)
 
-    case TragarApi.create_quote(quote_data) do
+    # Use account reference credentials for API call
+    api_opts = build_api_opts(account_reference)
+
+    case TragarApi.create_quote(quote_data, api_opts) do
       {:ok, response} ->
-        # Save the full quote to local database
         content = build_content_from_params(quote_params, items)
 
         full_quote_attrs =
@@ -262,7 +259,8 @@ defmodule TragarCmsWeb.DashboardLive do
             "author" => quote_params["consignor_name"] || "FreightWare API",
             "content" => "Full Quote: #{content}",
             "status" => "pending",
-            "total_amount" => extract_total_amount_from_response(response)
+            "total_amount" => extract_total_amount_from_response(response),
+            "account_reference_id" => account_reference && account_reference.id
           })
 
         case Quotes.create_quote(full_quote_attrs) do
@@ -294,7 +292,7 @@ defmodule TragarCmsWeb.DashboardLive do
   end
 
   # Handle regular quote creation (local only)
-  defp handle_regular_quote(quote_params, params, socket) do
+  defp handle_regular_quote(quote_params, params, socket, account_reference) do
     items = extract_items_from_params(params)
     content = build_content_from_params(quote_params, items)
 
@@ -302,7 +300,8 @@ defmodule TragarCmsWeb.DashboardLive do
       Map.merge(quote_params, %{
         "content" => content,
         "author" => quote_params["consignor_name"] || "Unknown",
-        "status" => "pending"
+        "status" => "pending",
+        "account_reference_id" => account_reference && account_reference.id
       })
 
     case Quotes.create_quote(quote_attrs) do
@@ -323,6 +322,17 @@ defmodule TragarCmsWeb.DashboardLive do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
     end
+  end
+
+  # Build API options from account reference credentials
+  defp build_api_opts(nil), do: []
+
+  defp build_api_opts(account_reference) do
+    [
+      username: account_reference.api_username,
+      password: account_reference.api_password,
+      station: account_reference.api_station
+    ]
   end
 
   # Build content description from quote parameters and items
