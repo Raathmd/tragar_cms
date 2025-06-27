@@ -33,8 +33,7 @@ defmodule TragarCms.Accounts do
   Returns the list of account references for an organization.
   """
   def list_account_references_for_organization(organization_id) do
-    AccountReference
-    |> AccountReference.for_organization(organization_id)
+    AccountReference.for_organization(organization_id)
     |> Repo.all()
   end
 
