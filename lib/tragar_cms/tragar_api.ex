@@ -30,7 +30,7 @@ defmodule TragarCms.TragarApi do
     }
 
     case Req.post("#{@base_url}/FreightWare/V2/system/auth/login",
-           json: response.body,
+           json: body,
            receive_timeout: 30_000,
            connect_options: [timeout: 30_000]
          ) do
@@ -146,14 +146,14 @@ defmodule TragarCms.TragarApi do
            receive_timeout: 30_000,
            connect_options: [timeout: 30_000]
          ) do
-      {:ok, %{status: 200, response.body: response.body}} when is_map(response.body) ->
+      {:ok, %{status: 200, body: response_body}} when is_map(response_body) ->
         Logger.info("Successfully fetched quotes from FreightWare")
-        quotes = parse_freightware_quotes(response.body, opts)
+        quotes = parse_freightware_quotes(response_body, opts)
         {:ok, quotes}
 
-      {:ok, %{status: status, response.body: _response.body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quotes request failed with status: #{status}")
-        Logger.error("Response response.body: #{inspect(response.body)}")
+        Logger.error("Response body: #{inspect(_response_body)}")
         {:error, "Failed to fetch quotes: HTTP #{status}"}
 
       {:error, reason} ->
@@ -166,21 +166,21 @@ defmodule TragarCms.TragarApi do
     headers = [{"X-FreightWare", token}, {"Content-Type", "application/json"}]
 
     # Build FreightWare quote request format
-    response.body = build_freightware_quote_request(quote_data)
+    body = build_freightware_quote_request(quote_data)
 
     case Req.post("#{@base_url}/FreightWare/V1/quotes/",
            headers: headers,
-           json: response.body,
+           json: body,
            receive_timeout: 30_000,
            connect_options: [timeout: 30_000]
          ) do
-      {:ok, %{status: 200, response.body: response}} ->
+      {:ok, %{status: 200, body: response}} ->
         Logger.info("Successfully created quote in FreightWare")
         {:ok, response}
 
-      {:ok, %{status: status, response.body: _response.body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote creation failed with status: #{status}")
-        Logger.error("Response response.body: #{inspect(response.body)}")
+        Logger.error("Response body: #{inspect(_response_body)}")
         {:error, "Failed to create quote: HTTP #{status}"}
 
       {:error, reason} ->
@@ -212,7 +212,7 @@ defmodule TragarCms.TragarApi do
         Logger.info("Successfully accepted quote #{quote_obj}")
         {:ok, :accepted}
 
-      {:ok, %{status: status, response.body: _response.body}} ->
+      {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote acceptance failed with status: #{status}")
         {:error, "Failed to accept quote: HTTP #{status}"}
 
@@ -257,9 +257,9 @@ defmodule TragarCms.TragarApi do
            receive_timeout: 30_000,
            connect_options: [timeout: 30_000]
          ) do
-      {:ok, %{status: 200, response.body: response.body}} ->
+      {:ok, %{status: 200, body: response_body}} ->
         Logger.info("Successfully retrieved tracking for quote #{quote_obj_or_number}")
-        {:ok, response.body}
+        {:ok, response_body}
 
       {:ok, %{status: status}} ->
         Logger.error("FreightWare tracking request failed with status: #{status}")
@@ -314,10 +314,10 @@ defmodule TragarCms.TragarApi do
     filters
   end
 
-  defp parse_freightware_quotes(response.body, opts) do
+  defp parse_freightware_quotes(response_body, opts) do
     limit = Keyword.get(opts, :limit, 10)
 
-    case response.body do
+    case response_body do
       %{"response" => %{"esWaybills" => quotes_data}} when is_binary(quotes_data) ->
         # Parse the JSON string response
         case Jason.decode(quotes_data) do
@@ -340,7 +340,7 @@ defmodule TragarCms.TragarApi do
         |> Enum.map(&convert_freightware_quote_to_cms_format/1)
 
       _ ->
-        Logger.warning("Unexpected FreightWare response format: #{inspect(response.body)}")
+        Logger.warning("Unexpected FreightWare response format: #{inspect(response_body)}")
         generate_sample_quotes(limit)
     end
   end
