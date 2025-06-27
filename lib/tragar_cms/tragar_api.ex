@@ -664,7 +664,7 @@ defmodule TragarCms.TragarApi do
 
   # Development mode helper\
   defp use_sample_data?() do
-    System.get_env("USE_SAMPLE_DATA", "true") == "true" or @api_username == "demo_user"
+    System.get_env("USE_SAMPLE_DATA", "false") == "true" or @api_username == "demo_user"
   end
 
   defp generate_sample_quotes(limit) do
