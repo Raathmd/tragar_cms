@@ -77,13 +77,8 @@ COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/tragar_cms ./
 
 USER nobody
 
-# Create directory for SQLite database
-RUN mkdir -p /app/data
-
-# Set the volume for persistent data
-VOLUME ["/app/data"]
-
 # If using a startup script, make sure it's executable
 RUN chmod +x /app/bin/tragar_cms
 
 CMD ["/app/bin/tragar_cms", "start"]
+
