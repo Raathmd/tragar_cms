@@ -25,37 +25,37 @@ defmodule TragarCms.TragarApi do
     if use_sample_data?() do
       Logger.info("Using sample authentication for development")
       {:ok, "sample_auth_token_12345"}
-    end
+    else
+      body = %{
+        username: @api_username,
+        password: @api_password,
+        station: @api_station
+      }
 
-    body = %{
-      username: @api_username,
-      password: @api_password,
-      station: @api_station
-    }
+      case Req.post("#{@base_url}/FreightWare/V2/system/auth/login",
+             json: body,
+             receive_timeout: 30_000,
+             connect_options: [timeout: 30_000]
+           ) do
+        {:ok, %{status: 200, headers: headers}} ->
+          case extract_auth_token(headers) do
+            {:ok, token} ->
+              Logger.info("Successfully authenticated with FreightWare")
+              {:ok, token}
 
-    case Req.post("#{@base_url}/FreightWare/V2/system/auth/login",
-           json: body,
-           receive_timeout: 30_000,
-           connect_options: [timeout: 30_000]
-         ) do
-      {:ok, %{status: 200, headers: headers}} ->
-        case extract_auth_token(headers) do
-          {:ok, token} ->
-            Logger.info("Successfully authenticated with FreightWare")
-            {:ok, token}
+            {:error, reason} ->
+              Logger.error("Failed to extract auth token: #{reason}")
+              {:error, "Authentication failed: #{reason}"}
+          end
 
-          {:error, reason} ->
-            Logger.error("Failed to extract auth token: #{reason}")
-            {:error, "Authentication failed: #{reason}"}
-        end
+        {:ok, %{status: status}} ->
+          Logger.error("FreightWare login failed with status: #{status}")
+          {:error, "Authentication failed with status #{status}"}
 
-      {:ok, %{status: status}} ->
-        Logger.error("FreightWare login failed with status: #{status}")
-        {:error, "Authentication failed with status #{status}"}
-
-      {:error, reason} ->
-        Logger.error("Failed to connect to FreightWare: #{inspect(reason)}")
-        {:error, "Connection failed: #{inspect(reason)}"}
+        {:error, reason} ->
+          Logger.error("Failed to connect to FreightWare: #{inspect(reason)}")
+          {:error, "Connection failed: #{inspect(reason)}"}
+      end
     end
   end
 
@@ -70,6 +70,30 @@ defmodule TragarCms.TragarApi do
       {:ok, quotes}
     else
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp fetch_quotes_with_token(token, account_reference_code) do
+    headers = [{"X-FreightWare", token}]
+    body = build_quote_filters(account_reference_code)
+
+    case Req.post("#{@base_url}/FreightWare/V1/quotes/filter",
+           headers: headers,
+           json: body,
+           receive_timeout: 30_000,
+           connect_options: [timeout: 30_000]
+         ) do
+      {:ok, %{status: 200, body: response_body}} ->
+        quotes = parse_freightware_quotes(response_body, account_reference_code)
+        {:ok, quotes}
+
+      {:ok, %{status: status}} ->
+        Logger.error("FreightWare fetch quotes failed with status: #{status}")
+        {:error, "Failed to fetch quotes: HTTP #{status}"}
+
+      {:error, reason} ->
+        Logger.error("Failed to fetch quotes from FreightWare: #{inspect(reason)}")
+        {:error, "Request failed: #{inspect(reason)}"}
     end
   end
 
@@ -172,16 +196,6 @@ defmodule TragarCms.TragarApi do
 
       {:error, reason} ->
         {:error, "Connection failed: #{inspect(reason)}"}
-    end
-  end
-
-  # Private functions
-
-    # Use sample data in development/demo mode
-    if use_sample_data?() do
-      Logger.info("Using sample quotes for development")
-      quotes = generate_sample_quotes(10)
-      return {:ok, quotes}
     end
   end
 
