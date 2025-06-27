@@ -9,9 +9,6 @@ defmodule TragarCms.Accounts.AccountReference do
     field :reference_code, :string
     field :reference_name, :string
     field :description, :string
-    field :api_username, :string
-    field :api_password, :string
-    field :api_station, :string
     field :status, :string, default: "active"
     field :is_default, :boolean, default: false
 
@@ -29,9 +26,6 @@ defmodule TragarCms.Accounts.AccountReference do
       :reference_code,
       :reference_name,
       :description,
-      :api_username,
-      :api_password,
-      :api_station,
       :status,
       :is_default,
       :organization_id
@@ -46,8 +40,8 @@ defmodule TragarCms.Accounts.AccountReference do
   @doc """
   Returns active account references for an organization.
   """
-  def for_organization(query, organization_id) do
-    from(ar in query,
+  def for_organization(organization_id) do
+    from(ar in __MODULE__,
       where: ar.organization_id == ^organization_id and ar.status == "active",
       order_by: [desc: ar.is_default, asc: ar.reference_name]
     )
