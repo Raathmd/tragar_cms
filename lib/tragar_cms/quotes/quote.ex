@@ -10,11 +10,10 @@ defmodule TragarCms.Quotes.Quote do
     field :status, :string
     field :total_amount, :decimal
 
-    # Quote metadata fields
-    field :quote_type, :string
+    # Core quote fields (these exist in database)
     field :quote_number, :string
-    field :quote_obj, :string
-    field :quote_date, :string
+    field :quote_obj, :decimal
+    field :quote_date, :date
     field :account_reference, :string
     field :shipper_reference, :string
     field :service_type, :string
@@ -26,13 +25,13 @@ defmodule TragarCms.Quotes.Quote do
     field :collection_instructions, :string
     field :delivery_instructions, :string
     field :estimated_kilometres, :integer
-    field :billable_units, :decimal
+    field :billable_units, :integer
     field :rate_type, :string
     field :rate_type_description, :string
     field :total_quantity, :integer
     field :total_weight, :decimal
 
-    # Consignor fields
+    # Consignor fields (these exist in database)
     field :consignor_site, :string
     field :consignor_name, :string
     field :consignor_building, :string
@@ -43,7 +42,7 @@ defmodule TragarCms.Quotes.Quote do
     field :consignor_contact_name, :string
     field :consignor_contact_tel, :string
 
-    # Consignee fields
+    # Consignee fields (these exist in database)
     field :consignee_site, :string
     field :consignee_name, :string
     field :consignee_building, :string
@@ -54,7 +53,7 @@ defmodule TragarCms.Quotes.Quote do
     field :consignee_contact_name, :string
     field :consignee_contact_tel, :string
 
-    # Additional fields
+    # Additional fields (these exist in database)
     field :waybill_number, :string
     field :collection_reference, :string
     field :accepted_by, :string
@@ -65,30 +64,6 @@ defmodule TragarCms.Quotes.Quote do
     field :cash_account_type, :string
     field :paying_party, :string
     field :vehicle_category, :string
-    field :api_response, :string
-
-    # Relationships
-    belongs_to :organization, TragarCms.Accounts.Organization
-    belongs_to :branch, TragarCms.Accounts.Branch
-    belongs_to :created_by_user, TragarCms.Accounts.User
-
-    # Embedded items
-    embeds_many :items, Item do
-      field :line_number, :integer
-      field :quantity, :integer
-      field :product_code, :string
-      field :description, :string
-      field :weight, :decimal
-      field :length, :decimal
-      field :width, :decimal
-      field :height, :decimal
-      field :volumetric_weight, :decimal
-      field :rate_type, :string
-      field :unit_value, :decimal
-      field :package_type, :string
-      field :special_handling, :string
-      field :special_instructions, :string
-    end
 
     timestamps(type: :utc_datetime)
   end
@@ -101,7 +76,6 @@ defmodule TragarCms.Quotes.Quote do
       :content,
       :status,
       :total_amount,
-      :quote_type,
       :quote_number,
       :quote_obj,
       :quote_date,
@@ -148,37 +122,72 @@ defmodule TragarCms.Quotes.Quote do
       :charged_amount,
       :cash_account_type,
       :paying_party,
-      :vehicle_category,
-      :api_response,
-      :organization_id,
-      :branch_id,
-      :created_by_user_id
+      :vehicle_category
     ])
-    |> cast_embed(:items, with: &item_changeset/2)
     |> validate_required([:content, :status])
     |> validate_inclusion(:status, ["pending", "accepted", "rejected"])
   end
 
-  defp item_changeset(item, attrs) do
-    item
-    |> cast(attrs, [
-      :line_number,
-      :quantity,
-      :product_code,
-      :description,
-      :weight,
-      :length,
-      :width,
-      :height,
-      :volumetric_weight,
-      :rate_type,
-      :unit_value,
-      :package_type,
-      :special_handling,
-      :special_instructions
-    ])
-    |> validate_required([:quantity, :weight])
-    |> validate_number(:quantity, greater_than: 0)
-    |> validate_number(:weight, greater_than: 0)
+  def get_stats(quotes) do
+    total_quotes = length(quotes)
+    pending_quotes = Enum.count(quotes, fn quote -> quote.status == "pending" end)
+    accepted_quotes = Enum.count(quotes, fn quote -> quote.status == "accepted" end)
+    rejected_quotes = Enum.count(quotes, fn quote -> quote.status == "rejected" end)
+
+    total_value =
+      quotes
+      |> Enum.map(fn quote ->
+        case quote.total_amount do
+          nil ->
+            Decimal.new(0)
+
+          amount when is_binary(amount) ->
+            case Decimal.parse(amount) do
+              {decimal, _} -> decimal
+              :error -> Decimal.new(0)
+            end
+
+          amount ->
+            amount
+        end
+      end)
+      |> Enum.reduce(Decimal.new(0), &Decimal.add/2)
+
+    avg_value =
+      if total_quotes > 0 do
+        Decimal.div(total_value, total_quotes)
+      else
+        Decimal.new(0)
+      end
+
+    pending_value =
+      quotes
+      |> Enum.filter(fn quote -> quote.status == "pending" end)
+      |> Enum.map(fn quote ->
+        case quote.total_amount do
+          nil ->
+            Decimal.new(0)
+
+          amount when is_binary(amount) ->
+            case Decimal.parse(amount) do
+              {decimal, _} -> decimal
+              :error -> Decimal.new(0)
+            end
+
+          amount ->
+            amount
+        end
+      end)
+      |> Enum.reduce(Decimal.new(0), &Decimal.add/2)
+
+    %{
+      total_quotes: total_quotes,
+      pending_quotes: pending_quotes,
+      accepted_quotes: accepted_quotes,
+      rejected_quotes: rejected_quotes,
+      total_value: total_value,
+      avg_value: avg_value,
+      pending_value: pending_value
+    }
   end
 end
