@@ -74,11 +74,21 @@ defmodule TragarCmsWeb.DashboardLive do
 
   @impl true
   def handle_event("save", %{"quote" => quote_params} = params, socket) do
-    # Extract and process items according to FreightWare specification
+    # Extract and process items for local storage
     items = extract_items_from_params(params)
-    quote_params_with_items = Map.put(quote_params, "items", items)
 
-    case Quotes.create_quote(quote_params_with_items) do
+    # Build content description from the form data
+    content = build_content_from_params(quote_params, items)
+
+    # Prepare quote attributes with content description
+    quote_attrs =
+      Map.merge(quote_params, %{
+        "content" => content,
+        "author" => quote_params["consignor_name"] || "Unknown",
+        "status" => "pending"
+      })
+
+    case Quotes.create_quote(quote_attrs) do
       {:ok, quote} ->
         Phoenix.PubSub.broadcast(TragarCms.PubSub, "quotes", {:quote_created, quote})
 
@@ -198,17 +208,15 @@ defmodule TragarCmsWeb.DashboardLive do
     case TragarApi.quick_quote(shipment_data) do
       {:ok, response} ->
         # Save the quick quote response to local database
+        content = build_content_from_params(quote_params, items)
+
         quick_quote_attrs = %{
-          "author" => "FreightWare API",
-          "content" =>
-            "Quick Quote: #{Map.get(quote_params, "consignor_name", "Unknown")} to #{Map.get(quote_params, "consignee_name", "Unknown")}",
+          "author" => quote_params["consignor_name"] || "FreightWare API",
+          "content" => "Quick Quote: #{content}",
           "status" => "pending",
           "total_amount" => extract_total_amount_from_response(response),
-          "quote_type" => "quick_quote",
-          "api_response" => Jason.encode!(response),
           "consignor_name" => Map.get(quote_params, "consignor_name"),
-          "consignee_name" => Map.get(quote_params, "consignee_name"),
-          "items" => items
+          "consignee_name" => Map.get(quote_params, "consignee_name")
         }
 
         case Quotes.create_quote(quick_quote_attrs) do
@@ -247,16 +255,14 @@ defmodule TragarCmsWeb.DashboardLive do
     case TragarApi.create_quote(quote_data) do
       {:ok, response} ->
         # Save the full quote to local database
+        content = build_content_from_params(quote_params, items)
+
         full_quote_attrs =
           Map.merge(quote_params, %{
-            "author" => "FreightWare API",
-            "content" =>
-              "Full Quote: #{Map.get(quote_params, "consignor_name", "Unknown")} to #{Map.get(quote_params, "consignee_name", "Unknown")}",
+            "author" => quote_params["consignor_name"] || "FreightWare API",
+            "content" => "Full Quote: #{content}",
             "status" => "pending",
-            "total_amount" => extract_total_amount_from_response(response),
-            "quote_type" => "quote",
-            "api_response" => Jason.encode!(response),
-            "items" => items
+            "total_amount" => extract_total_amount_from_response(response)
           })
 
         case Quotes.create_quote(full_quote_attrs) do
@@ -290,9 +296,16 @@ defmodule TragarCmsWeb.DashboardLive do
   # Handle regular quote creation (local only)
   defp handle_regular_quote(quote_params, params, socket) do
     items = extract_items_from_params(params)
-    quote_params_with_items = Map.put(quote_params, "items", items)
+    content = build_content_from_params(quote_params, items)
 
-    case Quotes.create_quote(quote_params_with_items) do
+    quote_attrs =
+      Map.merge(quote_params, %{
+        "content" => content,
+        "author" => quote_params["consignor_name"] || "Unknown",
+        "status" => "pending"
+      })
+
+    case Quotes.create_quote(quote_attrs) do
       {:ok, quote} ->
         Phoenix.PubSub.broadcast(TragarCms.PubSub, "quotes", {:quote_created, quote})
 
@@ -309,6 +322,19 @@ defmodule TragarCmsWeb.DashboardLive do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset, action: :validate))}
+    end
+  end
+
+  # Build content description from quote parameters and items
+  defp build_content_from_params(quote_params, items) do
+    consignor = Map.get(quote_params, "consignor_name", "Unknown")
+    consignee = Map.get(quote_params, "consignee_name", "Unknown")
+    item_count = length(items)
+
+    if item_count > 0 do
+      "#{consignor} to #{consignee} (#{item_count} items)"
+    else
+      "#{consignor} to #{consignee}"
     end
   end
 
