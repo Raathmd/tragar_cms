@@ -23,7 +23,7 @@ defmodule TragarCms.TragarApi do
     password = Keyword.get(opts, :password, @default_password)
     station = Keyword.get(opts, :station, @default_station)
 
-    response.body = %{
+    body = %{
       username: username,
       password: password,
       station: station
