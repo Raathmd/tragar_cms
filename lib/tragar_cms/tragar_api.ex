@@ -2,6 +2,7 @@ defmodule TragarCms.TragarApi do
   @moduledoc """
   Client for interacting with the FreightWare/Tragar API to fetch quotes.
   Handles authentication and quote retrieval operations.
+  Uses single API credentials from environment variables for all requests.
   """
 
   require Logger
@@ -9,24 +10,21 @@ defmodule TragarCms.TragarApi do
   # FreightWare API base URL - updated with your provided endpoint
   @base_url "http://tragar-db.dovetail.co.za:5001/WebServices/web"
 
-  # Default credentials from environment variables
-  @default_username System.get_env("TRAGAR_USERNAME", "demo_user")
-  @default_password System.get_env("TRAGAR_PASSWORD", "demo_pass")
-  @default_station System.get_env("TRAGAR_STATION", "demo_station")
+  # Single API credentials from environment variables
+  @api_username System.get_env("TRAGAR_API_USERNAME", "demo_user")
+  @api_password System.get_env("TRAGAR_API_PASSWORD", "demo_pass")
+  @api_station System.get_env("TRAGAR_API_STATION", "demo_station")
 
   @doc """
   Authenticates with FreightWare and returns the auth token.
+  Uses single API credentials for all organizations.
   Returns {:ok, token} or {:error, reason}.
   """
-  def authenticate(opts \\ []) do
-    username = Keyword.get(opts, :username, @default_username)
-    password = Keyword.get(opts, :password, @default_password)
-    station = Keyword.get(opts, :station, @default_station)
-
+  def authenticate do
     body = %{
-      username: username,
-      password: password,
-      station: station
+      username: @api_username,
+      password: @api_password,
+      station: @api_station
     }
 
     case Req.post("#{@base_url}/FreightWare/V2/system/auth/login",
@@ -57,11 +55,12 @@ defmodule TragarCms.TragarApi do
 
   @doc """
   Fetches quotes from FreightWare with authentication.
+  Optionally filters by account reference code for organization-specific data.
   Returns a list of quote maps or an error tuple.
   """
-  def fetch_quotes(opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
-         {:ok, quotes} <- fetch_quotes_with_token(token, opts) do
+  def fetch_quotes(account_reference_code \\ nil) do
+    with {:ok, token} <- authenticate(),
+         {:ok, quotes} <- fetch_quotes_with_token(token, account_reference_code) do
       {:ok, quotes}
     else
       {:error, reason} -> {:error, reason}
@@ -72,8 +71,8 @@ defmodule TragarCms.TragarApi do
   Gets a specific quote by quote number or quote object.
   Returns {:ok, quote} or {:error, reason}.
   """
-  def get_quote(quote_identifier, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
+  def get_quote(quote_identifier) do
+    with {:ok, token} <- authenticate(),
          {:ok, quote} <- get_quote_with_token(token, quote_identifier) do
       {:ok, quote}
     else
@@ -83,10 +82,11 @@ defmodule TragarCms.TragarApi do
 
   @doc """
   Creates a new quote in FreightWare using the V1 API.
+  Uses the account reference code to filter/tag the quote.
   """
-  def create_quote(quote_data, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
-         {:ok, response} <- create_quote_with_token(token, quote_data) do
+  def create_quote(quote_data, account_reference_code \\ nil) do
+    with {:ok, token} <- authenticate(),
+         {:ok, response} <- create_quote_with_token(token, quote_data, account_reference_code) do
       {:ok, response}
     else
       {:error, reason} -> {:error, reason}
@@ -96,9 +96,10 @@ defmodule TragarCms.TragarApi do
   @doc """
   Updates an existing quote in FreightWare.
   """
-  def update_quote(quote_identifier, quote_data, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
-         {:ok, response} <- update_quote_with_token(token, quote_identifier, quote_data) do
+  def update_quote(quote_identifier, quote_data, account_reference_code \\ nil) do
+    with {:ok, token} <- authenticate(),
+         {:ok, response} <-
+           update_quote_with_token(token, quote_identifier, quote_data, account_reference_code) do
       {:ok, response}
     else
       {:error, reason} -> {:error, reason}
@@ -107,10 +108,11 @@ defmodule TragarCms.TragarApi do
 
   @doc """
   Gets a quick quote (rate estimate) without creating an official quote.
+  Uses account reference code for filtering if provided.
   """
-  def quick_quote(shipment_data, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
-         {:ok, response} <- quick_quote_with_token(token, shipment_data) do
+  def quick_quote(shipment_data, account_reference_code \\ nil) do
+    with {:ok, token} <- authenticate(),
+         {:ok, response} <- quick_quote_with_token(token, shipment_data, account_reference_code) do
       {:ok, response}
     else
       {:error, reason} -> {:error, reason}
@@ -120,10 +122,10 @@ defmodule TragarCms.TragarApi do
   @doc """
   Accepts a quote in FreightWare.
   """
-  def accept_quote(quote_obj, acceptance_type, accepted_by, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
+  def accept_quote(quote_obj, acceptance_type, accepted_by) do
+    with {:ok, token} <- authenticate(),
          {:ok, response} <-
-           accept_quote_with_token(token, quote_obj, acceptance_type, accepted_by, opts) do
+           accept_quote_with_token(token, quote_obj, acceptance_type, accepted_by) do
       {:ok, response}
     else
       {:error, reason} -> {:error, reason}
@@ -133,8 +135,8 @@ defmodule TragarCms.TragarApi do
   @doc """
   Rejects a quote in FreightWare.
   """
-  def reject_quote(quote_obj, reject_reason, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
+  def reject_quote(quote_obj, reject_reason) do
+    with {:ok, token} <- authenticate(),
          {:ok, response} <- reject_quote_with_token(token, quote_obj, reject_reason) do
       {:ok, response}
     else
@@ -145,8 +147,8 @@ defmodule TragarCms.TragarApi do
   @doc """
   Gets quote tracking information.
   """
-  def track_quote(quote_obj_or_number, opts \\ []) do
-    with {:ok, token} <- authenticate(opts),
+  def track_quote(quote_obj_or_number) do
+    with {:ok, token} <- authenticate(),
          {:ok, response} <- track_quote_with_token(token, quote_obj_or_number) do
       {:ok, response}
     else
@@ -169,11 +171,11 @@ defmodule TragarCms.TragarApi do
 
   # Private functions
 
-  defp fetch_quotes_with_token(token, opts) do
+  defp fetch_quotes_with_token(token, account_reference_code) do
     headers = [{"X-FreightWare", token}]
 
-    # Build query filters if provided
-    filters = build_quote_filters(opts)
+    # Build query filters including account reference if provided
+    filters = build_quote_filters(account_reference_code)
     query_params = if filters != %{}, do: [filters: Jason.encode!(filters)], else: []
 
     # Use the real FreightWare V1 quotes endpoint
@@ -185,12 +187,11 @@ defmodule TragarCms.TragarApi do
          ) do
       {:ok, %{status: 200, body: response_body}} when is_map(response_body) ->
         Logger.info("Successfully fetched quotes from FreightWare")
-        quotes = parse_freightware_quotes(response_body, opts)
+        quotes = parse_freightware_quotes(response_body, account_reference_code)
         {:ok, quotes}
 
       {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quotes request failed with status: #{status}")
-        Logger.error("Response body not available")
         {:error, "Failed to fetch quotes: HTTP #{status}"}
 
       {:error, reason} ->
@@ -215,7 +216,6 @@ defmodule TragarCms.TragarApi do
 
       {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare get quote request failed with status: #{status}")
-        Logger.error("Response body not available")
         {:error, "Failed to get quote: HTTP #{status}"}
 
       {:error, reason} ->
@@ -224,11 +224,11 @@ defmodule TragarCms.TragarApi do
     end
   end
 
-  defp create_quote_with_token(token, quote_data) do
+  defp create_quote_with_token(token, quote_data, account_reference_code) do
     headers = [{"X-FreightWare", token}, {"Content-Type", "application/json"}]
 
-    # Build FreightWare quote request format
-    body = build_freightware_quote_request(quote_data)
+    # Build FreightWare quote request format with account reference
+    body = build_freightware_quote_request(quote_data, account_reference_code)
 
     case Req.post("#{@base_url}/FreightWare/V1/quotes/",
            headers: headers,
@@ -242,7 +242,6 @@ defmodule TragarCms.TragarApi do
 
       {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote creation failed with status: #{status}")
-        Logger.error("Response body not available")
         {:error, "Failed to create quote: HTTP #{status}"}
 
       {:error, reason} ->
@@ -251,12 +250,12 @@ defmodule TragarCms.TragarApi do
     end
   end
 
-  defp update_quote_with_token(token, quote_identifier, quote_data) do
+  defp update_quote_with_token(token, quote_identifier, quote_data, account_reference_code) do
     headers = [{"X-FreightWare", token}, {"Content-Type", "application/json"}]
     url = "#{@base_url}/FreightWare/V1/quotes/#{quote_identifier}/"
 
-    # Build FreightWare quote request format
-    body = build_freightware_quote_request(quote_data)
+    # Build FreightWare quote request format with account reference
+    body = build_freightware_quote_request(quote_data, account_reference_code)
 
     case Req.put(url,
            headers: headers,
@@ -270,7 +269,6 @@ defmodule TragarCms.TragarApi do
 
       {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quote update failed with status: #{status}")
-        Logger.error("Response body not available")
         {:error, "Failed to update quote: HTTP #{status}"}
 
       {:error, reason} ->
@@ -279,11 +277,11 @@ defmodule TragarCms.TragarApi do
     end
   end
 
-  defp quick_quote_with_token(token, shipment_data) do
+  defp quick_quote_with_token(token, shipment_data, account_reference_code) do
     headers = [{"X-FreightWare", token}, {"Content-Type", "application/json"}]
 
-    # Build FreightWare shipment request format
-    body = build_freightware_shipment_request(shipment_data)
+    # Build FreightWare shipment request format with account reference
+    body = build_freightware_shipment_request(shipment_data, account_reference_code)
 
     case Req.post("#{@base_url}/FreightWare/V1/quotes/quick",
            headers: headers,
@@ -297,7 +295,6 @@ defmodule TragarCms.TragarApi do
 
       {:ok, %{status: status, body: _response_body}} ->
         Logger.error("FreightWare quick quote failed with status: #{status}")
-        Logger.error("Response body not available")
         {:error, "Failed to get quick quote: HTTP #{status}"}
 
       {:error, reason} ->
@@ -306,15 +303,15 @@ defmodule TragarCms.TragarApi do
     end
   end
 
-  defp accept_quote_with_token(token, quote_obj, acceptance_type, accepted_by, opts) do
+  defp accept_quote_with_token(token, quote_obj, acceptance_type, accepted_by) do
     headers = [{"X-FreightWare", token}]
 
     query_params = [
       acceptedBy: accepted_by,
-      acceptReference: Keyword.get(opts, :accept_reference, ""),
-      createCollection: Keyword.get(opts, :create_collection, true),
-      collectionIsQuoteNumber: Keyword.get(opts, :collection_is_quote_number, true),
-      createWaybill: Keyword.get(opts, :create_waybill, true)
+      acceptReference: "",
+      createCollection: true,
+      collectionIsQuoteNumber: true,
+      createWaybill: true
     ]
 
     url = "#{@base_url}/FreightWare/V1/quotes/#{quote_obj}/accept/#{acceptance_type}"
@@ -400,39 +397,20 @@ defmodule TragarCms.TragarApi do
     end
   end
 
-  defp build_quote_filters(opts) do
+  defp build_quote_filters(account_reference_code) do
     filters = %{}
 
+    # Add account reference filter if provided
     filters =
-      if quote_number = Keyword.get(opts, :quote_number),
-        do: Map.put(filters, :quoteNumber, quote_number),
-        else: filters
-
-    filters =
-      if account_ref = Keyword.get(opts, :account_reference),
-        do: Map.put(filters, :accountReference, account_ref),
-        else: filters
-
-    filters =
-      if status_code = Keyword.get(opts, :status_code),
-        do: Map.put(filters, :statusCode, status_code),
-        else: filters
-
-    filters =
-      if date_from = Keyword.get(opts, :date_from),
-        do: Map.put(filters, :dateFrom, date_from),
-        else: filters
-
-    filters =
-      if date_to = Keyword.get(opts, :date_to),
-        do: Map.put(filters, :dateTo, date_to),
+      if account_reference_code && account_reference_code != "",
+        do: Map.put(filters, :accountReference, account_reference_code),
         else: filters
 
     filters
   end
 
-  defp parse_freightware_quotes(response_body, opts) do
-    limit = Keyword.get(opts, :limit, 10)
+  defp parse_freightware_quotes(response_body, _account_reference_code) do
+    limit = 10
 
     case response_body do
       # Handle the correct response format according to API spec
@@ -513,7 +491,6 @@ defmodule TragarCms.TragarApi do
       "quote_number" => Map.get(quote, "quoteNumber"),
       "quote_obj" => Map.get(quote, "quoteObj"),
       "quote_date" => Map.get(quote, "quoteDate"),
-      "account_reference" => Map.get(quote, "accountReference"),
       "shipper_reference" => Map.get(quote, "shipperReference"),
       "service_type" => Map.get(quote, "serviceType"),
       "service_type_description" => Map.get(quote, "serviceTypeDescription"),
@@ -566,8 +543,9 @@ defmodule TragarCms.TragarApi do
     }
   end
 
-  defp build_freightware_quote_request(quote_data) do
+  defp build_freightware_quote_request(quote_data, account_reference_code) do
     quote_info = %{
+      "accountReference" => account_reference_code || "",
       "collectionInstructions" => Map.get(quote_data, "collection_instructions", ""),
       "deliveryInstructions" => Map.get(quote_data, "delivery_instructions", ""),
       "estimatedKilometres" => Map.get(quote_data, "estimated_kilometres", 0),
@@ -627,12 +605,13 @@ defmodule TragarCms.TragarApi do
     }
   end
 
-  defp build_freightware_shipment_request(shipment_data) do
+  defp build_freightware_shipment_request(shipment_data, account_reference_code) do
     %{
       "request" => %{
         "esShipment" =>
           Map.merge(
             %{
+              "accountReference" => account_reference_code || "",
               "serviceType" => "",
               "consignorName" => "",
               "consignorBuilding" => "",
