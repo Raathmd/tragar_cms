@@ -1,5 +1,6 @@
 defmodule TragarCms.Accounts.AccountReference do
   use Ecto.Schema
+  import Ecto.Query, warn: false
   import Ecto.Changeset
 
   @primary_key {:id, :binary_id, autogenerate: true}
@@ -45,9 +46,4 @@ defmodule TragarCms.Accounts.AccountReference do
   @doc """
   Returns active account references for an organization.
   """
-  def for_organization(organization_id) do
-    from ar in __MODULE__,
-      where: ar.organization_id == ^organization_id and ar.status == "active",
-      order_by: [desc: ar.is_default, asc: ar.reference_name]
-  end
 end
