@@ -46,4 +46,10 @@ defmodule TragarCms.Accounts.AccountReference do
   @doc """
   Returns active account references for an organization.
   """
+  def for_organization(query, organization_id) do
+    from(ar in query,
+      where: ar.organization_id == ^organization_id and ar.status == "active",
+      order_by: [desc: ar.is_default, asc: ar.reference_name]
+    )
+  end
 end
