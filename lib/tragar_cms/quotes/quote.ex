@@ -2,11 +2,19 @@ defmodule TragarCms.Quotes.Quote do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
   schema "quotes" do
-    # Core quote fields
+    field :author, :string
+    field :content, :string
+    field :status, :string
+    field :total_amount, :decimal
+
+    # Quote metadata fields
+    field :quote_type, :string
     field :quote_number, :string
-    field :quote_obj, :decimal
-    field :quote_date, :date
+    field :quote_obj, :string
+    field :quote_date, :string
     field :account_reference, :string
     field :shipper_reference, :string
     field :service_type, :string
@@ -18,13 +26,13 @@ defmodule TragarCms.Quotes.Quote do
     field :collection_instructions, :string
     field :delivery_instructions, :string
     field :estimated_kilometres, :integer
-    field :billable_units, :integer
+    field :billable_units, :decimal
     field :rate_type, :string
     field :rate_type_description, :string
     field :total_quantity, :integer
     field :total_weight, :decimal
 
-    # Consignor (sender) information
+    # Consignor fields
     field :consignor_site, :string
     field :consignor_name, :string
     field :consignor_building, :string
@@ -35,7 +43,7 @@ defmodule TragarCms.Quotes.Quote do
     field :consignor_contact_name, :string
     field :consignor_contact_tel, :string
 
-    # Consignee (receiver) information
+    # Consignee fields
     field :consignee_site, :string
     field :consignee_name, :string
     field :consignee_building, :string
@@ -57,24 +65,34 @@ defmodule TragarCms.Quotes.Quote do
     field :cash_account_type, :string
     field :paying_party, :string
     field :vehicle_category, :string
+    field :api_response, :string
 
-    # Quote items as embedded JSON
-    field :items, {:array, :map}, default: []
+    # Embedded items
+    embeds_many :items, Item do
+      field :line_number, :integer
+      field :quantity, :integer
+      field :product_code, :string
+      field :description, :string
+      field :weight, :decimal
+      field :length, :decimal
+      field :width, :decimal
+      field :height, :decimal
+      field :volumetric_weight, :decimal
+      field :rate_type, :string
+    end
 
-    # Legacy fields for backwards compatibility
-    field :content, :string
-    field :author, :string
-    field :source, :string
-    field :category, :string
-    field :status, :string, default: "pending"
-
-    timestamps()
+    timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(quote, attrs) do
     quote
     |> cast(attrs, [
+      :author,
+      :content,
+      :status,
+      :total_amount,
+      :quote_type,
       :quote_number,
       :quote_obj,
       :quote_date,
@@ -122,53 +140,29 @@ defmodule TragarCms.Quotes.Quote do
       :cash_account_type,
       :paying_party,
       :vehicle_category,
-      :content,
-      :author,
-      :source,
-      :category,
-      :status
+      :api_response
     ])
-    |> validate_required([
-      :consignor_name,
-      :consignor_building,
-      :consignor_street,
-      :consignor_suburb,
-      :consignor_city,
-      :consignor_postal_code,
-      :consignor_contact_name,
-      :consignor_contact_tel,
-      :consignee_name,
-      :consignee_building,
-      :consignee_street,
-      :consignee_suburb,
-      :consignee_city,
-      :consignee_postal_code,
-      :consignee_contact_name,
-      :consignee_contact_tel
-    ])
-    |> validate_length(:quote_number, max: 35)
-    |> validate_length(:account_reference, max: 15)
-    |> validate_length(:shipper_reference, max: 35)
-    |> validate_length(:service_type, max: 10)
-    |> validate_length(:consignor_name, max: 70)
-    |> validate_length(:consignee_name, max: 70)
-    |> validate_inclusion(:status, ["pending", "published", "archived"])
+    |> cast_embed(:items, with: &item_changeset/2)
+    |> validate_required([:content, :status])
+    |> validate_inclusion(:status, ["pending", "accepted", "rejected"])
   end
 
-  @doc """
-  Returns quote statistics for dashboard cards
-  """
-  def get_stats(quotes) do
-    total = length(quotes)
-    published = Enum.count(quotes, &(&1.status == "published"))
-    pending = Enum.count(quotes, &(&1.status == "pending"))
-    authors = quotes |> Enum.map(& &1.author) |> Enum.uniq() |> length()
-
-    %{
-      total: total,
-      published: published,
-      pending: pending,
-      authors: authors
-    }
+  defp item_changeset(item, attrs) do
+    item
+    |> cast(attrs, [
+      :line_number,
+      :quantity,
+      :product_code,
+      :description,
+      :weight,
+      :length,
+      :width,
+      :height,
+      :volumetric_weight,
+      :rate_type
+    ])
+    |> validate_required([:quantity, :weight])
+    |> validate_number(:quantity, greater_than: 0)
+    |> validate_number(:weight, greater_than: 0)
   end
 end
