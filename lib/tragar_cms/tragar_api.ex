@@ -24,7 +24,7 @@ defmodule TragarCms.TragarApi do
     # Use sample data in development/demo mode
     if use_sample_data?() do
       Logger.info("Using sample authentication for development")
-      return({:ok, "sample_auth_token_12345"})
+      {:ok, "sample_auth_token_12345"}
     end
 
     body = %{
